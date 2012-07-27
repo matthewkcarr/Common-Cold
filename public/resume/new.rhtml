@@ -1,0 +1,10 @@
+<p>
+Would you like to add them as your:
+</p>
+<% form_for :relationship, @relationship, :url => { :action => "create" } do |form| -%>
+<%= render :partial => 'form', :object => form %>
+  <%= submit_tag "ADD" %>
+<% end -%>
+
+<%= button_to @remove_text, {:controller => :relationship, :action => :delete, :relationship => @relationship}, :method => :delete  if @remove %>
+

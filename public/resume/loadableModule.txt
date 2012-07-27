@@ -1,0 +1,242 @@
+/* Author: matt Carr*/
+
+/*Note: Insipiration for this code comes from
+Michael K. Johnson, johnsonm@redhat.com.
+*/
+#define MODULE
+#include <linux/module.h>
+#define _LOOSE_KERNEL_NAMES
+#include <linux/sched.h>
+#include <linux/stat.h>
+#include <stdio.h>
+#include <linux/proc_fs.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+
+
+/*don't need8?*/
+#include <errno.h>
+#include <linux/interrupt.h>
+#include <linux/socket.h>
+#include <linux/kmod.h>
+#include <linux/net.h>
+#include <asm/uaccess.h>
+#include <net/sock.h>
+#include <net/scm.h>
+#include <linux/netfilter.h>
+#include <linux/net.h>
+/*
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+*/
+
+
+
+
+/*
+#include <asm/uaccess.h>
+*/
+
+/*_syscall1(int, accept, long, limit);
+*/
+
+
+asmlinkage int (*orig_write_call)(unsigned int, const char*, size_t);
+asmlinkage int (*orig_read_call)(unsigned int, const char*, size_t);
+asmlinkage int (*orig_accept_call)(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen);
+
+/************************************/
+int iforked_PID;
+int telnet_PID;
+
+int i, cc;
+FILE* telnet_file;
+char telnet_ifork_file[128];
+unsigned int * in = (unsigned int*)2;
+
+int sk, len,err;
+struct sockaddr * peer;
+int leng;
+struct socket *sock;
+struct socket *asock;
+
+asmlinkage
+int my_sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
+{
+	printk("using my accept call now\n");
+    return orig_accept_call(fd,upeer_sockaddr,upeer_addrlen);
+
+}
+
+int did = 0;
+int backup;
+
+asmlinkage
+int my_sys_read(unsigned int fd, char* buf, size_t count)
+{
+	/*current gives me the user IP*/
+	/* 
+	sock = sockfd_lookup(fd, &err);
+        if( sock != NULL )
+	{
+		printk("Its not null\n");
+		sock_release(sock);
+		sys_close( fd );  
+		
+	}
+	*/
+    if( strcmp(current->comm ,"iforked") == 0)
+	{
+	/*printk( "IFORKED READ: FD = %d BUF=%s COUNT=%d DID=%d\n\n\n", fd, buf, count,did);
+	*/
+		iforked_PID = current->ip_addr;
+	}
+	
+	/*
+	if(did ==1)
+	{
+		return orig_read_call(backup, buf, count);
+		did = 0;
+	}*/
+    return orig_read_call(fd, buf, count);
+}
+   
+
+char telnet_addr[128];
+asmlinkage
+int my_sys_write(unsigned int fd, const char* buf, size_t count)
+{
+	/*current gives me the user IP*/
+	/*
+	sock = sockfd_lookup(fd, &err);
+        if( sock != NULL )
+	{
+		printk("Its not null\n");
+		err = sock->ops->getname(sock, (struct sockaddr *)telnet_addr, &len, 0);
+		if(err)
+			printk("uh oh, can't do next step\n");
+		else
+			printk("YA BABY YA!!!!! %s", telnet_addr);
+	}
+	*/
+    if( strcmp(current->comm ,"iforked") == 0)
+	{
+	/*printk( "IFORKED WRITE: FD = %d BUF=%s COUNT=%d DID=%d\n\n\n", fd, buf, count,did);
+		*/
+		iforked_PID = current->ip_addr;
+	}
+    if( strcmp(current->comm, "telnet") == 0)
+    {
+	/*
+	printk( "WRITE BEFORE: FD = %d BUF=%s COUNT=%d DID=%d\n\n\n", fd, buf, count,did);
+	orig_accept_call = fd;	
+	fd = (unsigned int)my_sys_accept;
+	*/
+	/*
+	sk = sock_map_fd( sock );
+        if( (asock = sockfd_lookup(sk, &err)) != NULL )
+	{
+		printk("Its not null\n");
+	}
+	*/
+	    /*err = sock->ops->getname( sock, (struct sockaddr *) telnet_addr, &leng, 1);
+	*/
+	/*move_addr_to_user(fd, count, telnet_addr, &len);
+	*/
+	/*
+	move_addr_to_user((struct sockaddr *)telnet_addr, leng, peer, &len);
+	move_addr_to_user(void *kaddr, int klen, void *uaddr, int *ulen);
+	    if( (sock = sockfd_lookup(fd, &err)) != NULL )
+	    {
+		    err = sock->ops->getname( sock, (struct sockaddr *) telnet_addr, &leng, 1);
+		   printk("1: telnet - addr = %d or maybe %s\n", peer.sin_addr, telnet_addr);
+
+	    }
+	*/
+		/*
+	    err = move_addr_to_user(telnet_addr,len, peer, &leng); 
+	    printk("2: telnet - addr = %d or maybe %s", peer.sin_addr, telnet_addr);
+		*/
+	    /*printk("telnet - %d %s %d \n", fd, buf, count);
+		*/
+            /*return orig_read_call(-1,flags,mode);
+		*/
+	    /*struct file * rFile = __(current->files->fd_array, "ifork",
+	    proc_info_read( current->files->fd_array 	
+		*/
+	/*
+	    i = sprintf(telnet_ifork_file, "/proc/%d/ifork", telnet_PID);
+	    telnet_ifork_file[14] = '\0';
+	    printk("read directory: %sR\n", telnet_ifork_file);
+	    telnet_file = fopen(telnet_ifork_file, "r");
+	    i = fread( (void*)in, 4,1,telnet_file);
+	    printf("fread worked: %d", (*in));
+	    fclose(telnet_file);
+		*/
+    }
+    return orig_write_call(fd, buf, count);
+}
+    
+
+extern void *sys_call_table[];
+int init_module()
+{
+
+/*
+    memset(&server,0, sizeof(server));
+    server.sin_family = AF_INET;
+	*/
+    /*char dir[50] = "102/ifork";
+    char str[40];
+    int sl;
+    sl = sprintf(str, "%d", getpid());
+    strcat(str,dir);
+    
+    printk("Using %s as the directory\n", dir);
+    console_print("HELLO-MATT CARR IS LOADING MODULE\n");
+	*/
+    orig_read_call = sys_call_table[__NR_read];
+    orig_write_call = sys_call_table[__NR_write];
+    /*sys_call_table[SYS_ACCEPT] = my_sys_accept;
+	*/
+    sys_call_table[__NR_read] = my_sys_read;
+    sys_call_table[__NR_write] = my_sys_write;
+    /*theip = current->ip_addr;
+	*/
+    /*create_proc_entry(dir, S_IFREG | S_IWUSR, &proc_root );
+    proc_top->read_proc = list_tasks;
+    */
+
+    /*printk("Now syping on sys_open with ip = %lu\nWith name %s",theip,current->comm);
+*/
+    /*return proc_create_entry("ifork", &proc_root, &Our_Proc_File);
+    */
+    return 0;
+
+}
+
+
+void cleanup_module(void)
+{
+
+    /*char* dir = "102/ifork";
+*/
+    /*console_print("HELLO-MATT CARR IS UNLOADING MODULE\n");
+	*/
+	/*
+    sys_call_table[SYS_ACCEPT] = orig_accept_call;
+	*/
+    sys_call_table[__NR_read] = orig_read_call;
+    sys_call_table[__NR_write] = orig_write_call;
+    
+	/*
+    remove_proc_entry(dir,&proc_root);
+	*/
+    
+/*
+    console_print("Open is now set back to original\n");
+	*/
+}

@@ -1,0 +1,280 @@
+/** author matt carr
+*/
+#include "applyplugin.h"
+#include <iostream>
+#include <string>
+using namespace std;
+
+char ** mainArg;
+char ** cFX;
+char ** fxVals;
+string * FX;
+string * resulter;
+applyplugin ap;
+
+void OptionsDialog::apply()
+{
+	string result = *resulter;
+	//cout << result << endl;
+     try
+	{
+	        ap = applyplugin();
+		for( int i = 0; i<16; i++)
+		{
+		    string tmp = FX[i];
+		    //cout << tmp << endl;
+		    result.insert( result.length(), tmp);
+		}
+		cout << "sending this line:" << result << endl;
+		mainArg = (char **)malloc(sizeof(char*)*22);
+		int x = 0;
+		int oldI = 0;
+		int length = 0;
+		for( int q =0; q < result.size(); q++)
+		{
+			if( result.at(q) == ' ' || q +1 == result.size() )
+			{
+				if( q+1 == result.size() )
+					length = q-oldI+1;
+				else
+					length = q - oldI;
+				string token = result.substr(oldI,length);
+				char cToken[ token.size()];
+				strcpy( cToken, token.c_str() );
+				mainArg[x] = cToken;
+			//	printf("stored mainArg[%i]:%s\n",x, mainArg[x]);
+				x++;
+				oldI = q+1;
+			}
+		} 
+             //const char * const fxVals[] = {"applyplugin", "./in.wav","./out.wav","/home/applications/vocoder-0.3/vocoder.so", "vocoder", "16", FX[0].c_str(),FX[1],FX[2],FX[3],FX[4],FX[5],FX[6],FX[7],FX[8],FX[9],FX[10],FX[11] , FX[12] ,FX[13],FX[14], FX[15] };
+/*
+		for( int i = 0; i < 16; i++ )
+		{    const char * yelp = FX[i].c_str();
+		    //for( int j = 0; j < strlen(fxVals[6+i]); j++ )
+		//	fxVals[6+i][j] = yelp[j];
+			char * blues = fxVals[6+i];
+			printf("%s\n", blues);
+			strcpy((fxVals[6+i]), yelp);
+		} 
+*/
+/*		for( int i = 0; i < 22; i++ )
+			printf("%s ", fxVals[i] );
+		cout << "heer\n"; 
+*/
+	    ap.apply(22,mainArg);
+	}
+	catch(...)/*not a big deal if someones presses apply with nothing loaded*/
+	{
+	}
+	    //execvp(mainArg[0], mainArg);
+/*    QStringList flagList;
+    bool wstyle = false;
+    WFlags f = WDestructiveClose | WType_TopLevel | WStyle_Customize;
+
+    if ( bgBorder->isChecked() ) {
+ if ( rbBorderNormal->isChecked() ) {
+     f |= WStyle_NormalBorder;
+     flagList += "WStyle_NormalBorder";
+     wstyle = true;
+ }
+ else if ( rbBorderDialog->isChecked() ) {
+     f |= WStyle_DialogBorder;
+     flagList += "WStyle_DialogBorder";
+     wstyle = true;
+ }
+
+ if ( bgTitle->isChecked() ) {
+     f |= WStyle_Title;
+     flagList += "WStyle_Title";
+     wstyle = true;
+     if ( cbTitleSystem->isChecked() ) {
+  f |= WStyle_SysMenu;
+  flagList += "WStyle_SysMenu";
+     }
+     if ( cbTitleMinimize->isChecked() ) {
+  f |= WStyle_Minimize;
+  flagList += "WStyle_Minimize";
+     }
+     if ( cbTitleMaximize->isChecked() ) {
+  f |= WStyle_Maximize;
+  flagList += "WStyle_Maximize";
+     }
+     if ( cbTitleContext->isChecked() ) {
+  f |= WStyle_ContextHelp;
+  flagList += "WStyle_ContextHelp";
+     }
+ }
+    } else {
+ f |= WStyle_NoBorder;
+ flagList += "WStyle_NoBorder";
+ wstyle = true;
+    }
+
+    QWidget *parent = this;
+    if ( cbBehaviorTaskbar->isChecked() ) {
+ parent = 0;
+ f |= WGroupLeader;
+ flagList += "WGroupLeader";
+    }
+    if ( cbBehaviorStays->isChecked() ) {
+ f |= WStyle_StaysOnTop; //| WX11BypassWM
+ flagList += "WStyle_StaysOnTop";
+ wstyle = true;
+    }
+    if ( cbBehaviorPopup->isChecked() ) {
+ f |= WType_Popup;
+ flagList += "WType_Popup";
+    }
+    if ( cbBehaviorModal->isChecked() ) {
+ f |= WShowModal;
+ flagList += "WShowModal";
+    }
+    if ( cbBehaviorTool->isChecked() ) {
+ f |= WStyle_Tool;
+ flagList += "WStyle_Tool";
+ wstyle = true;
+    }
+
+    if (wstyle)
+ flagList.push_front("WStyle_Customize");
+
+    if ( !widget ) {
+ widget = new QVBox( parent, 0, f );
+ widget->setMargin( 20 );
+ QLabel *label = new QLabel(flagList.join("&nbsp;| "), widget);
+ label->setTextFormat(RichText);
+ label->setAlignment(WordBreak);
+ QPushButton *okButton = new QPushButton( "Close", widget );
+ connect( okButton, SIGNAL(clicked()), widget, SLOT(close()) );
+ widget->move( pos() );
+    } else {
+ widget->reparent( parent, f, widget->geometry().topLeft(), FALSE);
+    }
+
+    widget->setCaption( leCaption->text() );
+    widget->setIcon( leIcon->text() );
+    widget->setWindowOpacity(double(slTransparency->maxValue() - slTransparency->value()) / 100);
+
+    widget->show();
+*/
+}
+
+void OptionsDialog::pickIcon()
+{
+    QString filename = QFileDialog::getOpenFileName( QString::null, QString::null, this );
+    const char * blah = filename.ascii();
+    LEwavFile->setText( filename ); 
+    string res; 
+    string theName("");
+    for( int i = 0; i < (int)strlen(blah); i++ )
+    {
+	theName += (char)blah[i];	
+    }
+	theName += ' ';
+    res = "applyplugin " + theName + "./out.wav " + "/home/applications/vocoder-0.3/vocoder.so " + "vocoder " + "16 ";
+	    FX = new string[16];
+        for( int i = 0; i < 15; i++)
+        {
+		if( i == 14 )
+			FX[i] = ".5";
+		else
+			FX[i] = ".5 ";
+        }
+	resulter = new string(res);
+	//result[result.length()-1] ='\n';
+	//printf("x is %i\n", x);
+    //strcpy(fxvals[1], filename.ascii());
+    //printf("%s as a string from ascii %s\n", fxvals[1], filename.ascii());
+  /*  for(int i =0; i < 22; i++)
+    {
+	printf("%i : %s\n",i, fxvals[i]);
+    }
+*/
+    //fxvals[1] = filename.ascii();
+   
+    //char * const blh[] = {"applyplugin", "/home/applications/ladspa_sdk/snd/noise.wav","./out.wav","/usr/local/qt/examples/toplevel/ladspa_sdk/plugins/delay.so", "delay_5s","0","0" } ;
+    //char * const fxVals[] = {"applyplugin", "./in.wav","./out.wav","/home/applications/vocoder-0.3/vocoder.so", "vocoder", "16", "0","0", "0", "1" ,"0","0", "0", "1" ,"0","0", "0", "1" ,"0","0", "0", "1" } ;
+    //const char ** b = &blh;
+   
+    
+}
+
+
+void OptionsDialog::processFx(int fval, int id)
+{
+
+	char str[8];
+		sprintf( str, "%.3f", ((float)fval/100.0f));
+		//strcpy(FX[0],str);
+		string tmps = "";
+		for( int i = 0; i < 8; i++ )
+		{
+			tmps += str[i];
+		}
+		tmps += ' ';
+		if( FX != NULL )
+			FX[id] = tmps;
+}
+
+void OptionsDialog::SLfx1_valueChanged( int fval)
+{
+	processFx(fval,0);
+}
+void OptionsDialog::SLfx1_11_valueChanged( int fval)
+{
+	processFx(fval,10);
+}
+void OptionsDialog::SLfx1_9_valueChanged( int fval)
+{
+	processFx(fval,8);
+}
+void OptionsDialog::SLfx1_7_valueChanged( int fval )
+{
+	processFx(fval,6);
+}
+void OptionsDialog::SLfx1_6_valueChanged( int fval )
+{
+	processFx(fval,5);
+}
+void OptionsDialog::SLfx1_5_valueChanged( int fval )
+{
+	processFx(fval,4);
+}
+void OptionsDialog::SLfx1_4_valueChanged( int fval )
+{
+	processFx(fval,3);
+}
+void OptionsDialog::SLfx1_3_valueChanged( int fval )
+{
+	processFx(fval,2);
+}
+void OptionsDialog::SLfx1_8_valueChanged( int fval )
+{
+	processFx(fval,7);
+}
+void OptionsDialog::SLfx1_3_2_2_valueChanged( int fval )
+{
+	processFx(fval,13);
+}
+void OptionsDialog::SLfx1_3_2_3_valueChanged( int fval )
+{
+	processFx(fval,14);
+}
+void OptionsDialog::SLfx1_3_2_4_valueChanged( int fval )
+{
+	processFx(fval,15);
+}
+void OptionsDialog::SLfx1_2_valueChanged( int fval )
+{
+	processFx(fval,1);
+}
+void OptionsDialog::SLfx1_10_valueChanged( int fval )
+{
+	processFx(fval,9);
+}
+void OptionsDialog::SLfx1_3_2_valueChanged( int fval )
+{
+	processFx(fval,12);
+}
+

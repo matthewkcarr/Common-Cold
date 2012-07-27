@@ -1,0 +1,38 @@
+
+#top-space {
+  position:absolute;
+}
+#main-nav {
+  padding-top: 3px;
+}
+#sub-nav {
+  padding-bottom: 4px;
+}
+ul#sub-history {
+  padding-left: 68px;
+}
+ul#sub-programs {
+  padding-left: 145px;
+}
+ul#sub-help {
+  padding-left: 238px;
+}
+ul#sub-faq {
+  padding-left: 308px;
+}
+ul#sub-links {
+  padding-left: 380px;
+}
+a#donate-btn {
+  outline: 1px solid yellow;
+  text-decoration: none;
+}
+input#donate_btn_2 {
+  margin-top: -9px;
+}
+#news-date {
+  margin-top: -283px;
+}
+#footer{
+  left: 700px;
+}

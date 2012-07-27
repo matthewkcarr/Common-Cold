@@ -1,0 +1,976 @@
+/*@author: Matthew Carr
+ *@date: April 19th, 2004
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <readline/history.h>
+#include <readline/readline.h>
+#include <string.h>
+#include <unistd.h>
+#include <malloc.h>
+#include <signal.h>
+#include <sys/errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include "parse.h"
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/resource.h>
+#include <sys/time.h>
+
+#define COMMAND 0  /*next string token must be a command*/
+#define ARG 1      /*next string token must be an argument*/
+#define FLE 2      /*next string token must be a file*/
+#define NONE 3   /*next string token can be anything
+including - argument, file, pipe, background, >, < or >> */
+#define END 4   /*next string token can be an nothing as in the case of &*/
+#define NEWCOMMAND 5
+/*Command status - load command uses this to determine where to put input data into the command struct*/
+
+
+void strip( char* );
+void loadCommand( char* );
+void procCommand( char* comd );
+
+
+int pipes = 0;
+int CMDstatus = 0;
+int prevStatus = 0;
+int finished = 0;
+int bullshit;
+
+CMD * currCommand;
+
+/*
+void proc_exit()
+{
+    int wait;
+    union wait wstat;
+    pid_t pid;
+    while(1)
+    {
+	pid = wait3(&wstat, WNOHANG, (struct rusage *)NULL);
+	if(pid == 0)
+	    return;
+	else if(pid == -1)
+	    return;
+	else
+	    fprintf(stderr,"Return code: %d\n", wstat.w_retcode);
+    }
+}
+*/
+
+typedef struct id_struct
+{
+    struct id_struct *nextid;
+    pid_t id;
+} TID;
+
+void reaper(int sig)
+{
+      int status;
+      while (waitpid(sig, &status, WNOHANG) > 0)
+      {
+      }
+      return;
+}
+
+
+int main(int args, char ** argv)
+{
+    char *line;
+    char *prompt;
+    int parseError = 0;
+    struct id_struct ID;
+    struct id_struct FIRST;
+    ID.nextid = NULL;
+    ID.id = -1;
+    FIRST = ID;
+    prompt = getenv("MYPROMPT");
+    if( prompt == NULL)
+    	prompt = strcat (strcat( strcat( getenv("USER"),"@"), getenv("HOST")), "% ");
+
+    /* BEGIN PROMPT */
+	while( parseError != -1  )
+	{
+	    int back;
+	    /* User entered a command */
+	    int pipefd[2];
+	    int pipefd2[2];
+	    int pipefd3[2];
+	    int pipefd4[2];
+	    char ** newargv;
+	    int sent = 0;
+	    int type1 = 0;
+	    int q = pipe(pipefd);
+	    int r = pipe(pipefd2);
+	    int t = pipe(pipefd3);
+	    int v = pipe(pipefd4);
+	    CMD * next; 
+	    /*while( caught == 0)
+	    {
+		caught = kill(0, SIGCONT);
+		if( waitpid(-2,&s,WNOHANG) < 0 )
+		if( caught < 0 )
+		    caught = 1;
+	    }*/
+	    /*
+	    if( ID.id != -1 )
+	    {
+		fprintf(stderr,"killing stuff\n");
+		ID = FIRST;
+		while( ID.id != -1 )
+		{
+		    waitpid(ID.id, NULL, 0);
+		    kill(ID.id, SIGSTOP);
+		    if( ID.nextid != NULL )
+			ID = *ID.nextid;
+			else
+			break;
+		}
+		ID.id = -1;
+		ID.nextid = NULL;
+		FIRST = ID;
+
+	    }*/
+	    line = readline(prompt);
+	    if(line == NULL ) 
+	    {
+		exit(0);
+	    }
+	    else if( strcmp(line, "exit") == 0 ) 
+	    {
+		exit(0);
+	    }
+	    parseError = parse(line, &currCommand);
+	    if( parseError < 0 )
+	    {
+		continue;
+	    }
+
+	    if( currCommand != NULL )
+		next = currCommand->nextCmd; 
+	    else
+	    {
+		continue;
+	    }
+	    newargv = currCommand->argv;
+
+	    /* Create pipe link for file descriptors*/
+
+	/*int q = pipe(pipefd);*/
+	    if( q < 0 || r < 0 || t < 0 || v < 0  )
+	    {
+		fprintf(stderr, "%s: ", newargv[0] );
+		perror("");
+		exit(1);
+	    }
+
+
+	    
+	    /*Process each command within pipes seperately using for loop*/
+	    /*mainId = fork();		
+	    if( mainId == 0)
+	    {*/
+	    if( currCommand->background == 1 )
+		back = 1;
+	    else
+		back = 0;
+	    sent = 0;
+	    while( 1 )
+	    { 
+		int now;
+		if( strcmp(newargv[0],"exit") == 0)
+		    exit(0);
+		if( currCommand->out_redir != NULL)
+		{
+		    /*append*/
+		    if(currCommand->appending != 0)
+		    {
+			if( currCommand->prevCmd != NULL )/*output to file, input from pipe*/
+			{
+			    pid_t id;
+			    int stat;
+			    id = fork();
+			    if(id == 0)
+			    {
+				int fild;
+				fild = open(currCommand->out_redir, O_WRONLY | O_APPEND | O_SYNC | O_CREAT, 0666);
+				if (fild < 0) 
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				if( dup2(fild, 1) != 1 )
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				if( currCommand->prevCmd->prevCmd != NULL )
+				{
+				    if( dup2(pipefd3[0], 0) != 0 )
+				    {
+					fprintf(stderr,"%s: ", newargv[0]);
+					perror("");
+					exit(1);
+				    }
+				}
+				else
+				{
+				    if( dup2(pipefd[0], 0) != 0 )
+				    {
+					fprintf(stderr,"%s: ", newargv[0]);
+					perror("");
+					exit(1);
+				     } 
+			        }
+				close(pipefd3[0]);
+				close(pipefd3[1]);
+				close(pipefd[0]);
+				close(pipefd[1]);
+				close(fild);
+				execvp(newargv[0], newargv);
+				fprintf(stderr, "%s: ", newargv[0] );
+				perror("");
+				exit(1);
+			    }
+			    else
+			    {
+				/*inputted from pipe so close it up*/
+				close(pipefd3[0]);
+				close(pipefd3[1]);
+				close(pipefd[0]);
+				close(pipefd[1]);
+				if( back == 0 )
+				    waitpid(id, &stat, WNOHANG|WUNTRACED);
+			    }
+			    now = 0;
+			}
+			else if( currCommand->in_redir != NULL)/*output to file, input from file*/
+			{
+			    pid_t id;
+			    int stat;
+			    id = fork();
+			    if(id == 0)
+			    {
+				int fild;
+				int fild2;
+				fild = open(currCommand->out_redir, O_WRONLY | O_APPEND | O_SYNC | O_CREAT , 0666);
+				fild2 = open(currCommand->in_redir, O_RDONLY, 0444);
+				if (fild < 0 || fild2 < 0) 
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				if( dup2(fild, 1) != 1 )
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				if( dup2(fild2, 0) != 0 )
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				close(fild);
+				close(fild2);
+				execvp(newargv[0], newargv);
+				fprintf(stderr, "%s: ", newargv[0] );
+				perror("");
+				exit(1);
+			    }
+			    else
+			    {
+				if( back == 0 )
+				    waitpid(id, &stat, 0);
+			    }
+			    now = 1;
+			}
+			else /*input from stdin output to file append*/
+			{
+			    pid_t id;
+			    int stat;
+			    id = fork();
+			    if(id == 0)
+			    {
+				int fild;
+				fild = open(currCommand->out_redir, O_WRONLY | O_APPEND | O_SYNC | O_CREAT , 0666);
+				if (fild < 0 ) 
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				if( dup2(fild, 1) != 1 )
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				close(fild);
+				execvp(newargv[0], newargv);
+				fprintf(stderr, "%s: ", newargv[0] );
+				perror("");
+				exit(1);
+			    }
+			    else
+			    {
+				if( back == 0 )
+				    waitpid(id, &stat, 0);
+			    }
+			}
+		    }
+		    else /*no append*/
+		    {
+			if( currCommand->prevCmd != NULL ) /*output to file input from pipe, don't append*/
+			{
+			    pid_t id;
+			    int stat;
+			    id = fork();
+			    if(id == 0)
+			    {
+				int fild;
+				fild = open(currCommand->out_redir, O_WRONLY | O_TRUNC | O_SYNC | O_CREAT, 0666);
+				if (fild < 0) 
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				if( dup2(fild, 1) != 1 )
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				if( currCommand->prevCmd->prevCmd != NULL )
+				{
+				    if( dup2(pipefd3[0], 0) != 0 )
+				    {
+					fprintf(stderr,"%s: ", newargv[0]);
+					perror("");
+					exit(1);
+				    }
+				}
+				else
+				{
+				    if( dup2(pipefd[0], 0) != 0 )
+				    {
+					fprintf(stderr,"%s: ", newargv[0]);
+					perror("");
+					exit(1);
+				    }
+				}
+				close(fild);
+				close(pipefd3[0]);
+				close(pipefd3[1]);
+				close(pipefd[0]);
+				close(pipefd[1]);
+				execvp(newargv[0], newargv);
+				fprintf(stderr, "%s: ", newargv[0] );
+				perror("");
+			    }
+			    else
+			    {
+				/* close pipe because its done being used*/
+				close(pipefd3[1]);
+				close(pipefd3[0]);
+				close(pipefd[0]);
+				close(pipefd[1]);
+				if( back == 0 )
+				    waitpid(id, &stat,0);
+			    }
+			    now = 2;
+			}
+			else if( currCommand->in_redir != NULL)/*output to file input from file, don't append*/
+			{
+			    pid_t id;
+			    int stat;
+			    id = fork();
+			    if(id == 0)
+			    {
+				int fild;
+				int fild2;
+				fild = open(currCommand->out_redir, O_WRONLY | O_TRUNC | O_SYNC | O_CREAT , 0666);
+				fild2 = open(currCommand->in_redir, O_RDONLY, 0444);
+				if (fild < 0 || fild2 < 0) 
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				if( dup2(fild, 1) != 1 )
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				if( dup2(fild2, 0) != 0 )
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				close(fild);
+				close(fild2);
+				execvp(newargv[0], newargv);
+				fprintf(stderr, "%s: ", newargv[0] );
+				perror("");
+				exit(1);
+			    }
+			    else
+			    {
+				if( back == 0 )
+				    waitpid(id, &stat, 0);
+			    }
+			    now = 3;
+			}
+			else
+			{
+			    pid_t id;
+			    int stat;
+			    id = fork();
+			    if(id == 0)
+			    {
+				int fild;
+				fild = open(currCommand->out_redir, O_WRONLY | O_TRUNC | O_SYNC | O_CREAT , 0666);
+				if (fild < 0 ) 
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				if( dup2(fild, 1) != 1 )
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				close(fild);
+				execvp(newargv[0], newargv);
+				fprintf(stderr, "%s: ", newargv[0] );
+				perror("");
+				exit(1);
+			    }
+			    else
+			    {
+				if( back == 0 )
+				    waitpid(id, &stat, 0);
+			    }
+			}
+		    }
+		}
+		else if( currCommand->nextCmd != NULL) /* output to a pipe*/
+		{
+		    if( currCommand->in_redir != NULL) /*in file and out pipe*/
+		    {
+			pid_t id;
+			int stat;
+			id = fork();
+			if(id == 0)
+			{
+			    int fild;
+			    fild = open(currCommand->in_redir, O_RDONLY, 0444);
+			    if (fild < 0) 
+			    {
+				fprintf(stderr,"%s: ", newargv[0]);
+				perror("");
+				exit(1);
+			    }
+			    if( dup2(fild, 0) != 0 )
+			    {
+				fprintf(stderr,"%s: ", newargv[0]);
+				perror("");
+				exit(1);
+			    }
+			    if( dup2(pipefd[1], 1) != 1 )
+			    {
+				fprintf(stderr,"%s: ", newargv[0]);
+				perror("");
+				exit(1);
+			    }
+			    close(fild);
+			    close(pipefd[0]);
+			    close(pipefd[1]);
+			    execvp(newargv[0], newargv);
+			    fprintf(stderr, "%s: ", newargv[0] );
+			    perror("");
+			}
+			else
+			{
+			    /*don't close pipe keep it open for next process*/
+			    if( back == 0 )
+				waitpid(id, &stat, 0);
+			}
+			now = 4;
+		    }
+		    else if( currCommand->prevCmd != NULL ) /*in pipe out pipe*/
+		    {
+			int stat;
+			pid_t id = fork();	
+			if(id == 0)
+			{
+			    if( currCommand->prevCmd->prevCmd != NULL )
+			    {
+				/*recieve from me type 1*/
+				if( type1 )
+				{
+				    if( dup2(pipefd2[0], 0) != 0 )
+				    {
+					fprintf(stderr,"%s: ", newargv[0]);
+					perror("");
+					exit(1);
+				    }
+				}
+				else /* type2*/
+				{
+				    if( dup2(pipefd4[0], 0) != 0 )
+				    {
+					fprintf(stderr,"%s: ", newargv[0]);
+					perror("");
+					exit(1);
+				    }
+				}
+				if(currCommand->nextCmd->nextCmd != NULL)
+				{
+				    /*send to me type1*/
+				    if(type1)
+				    {
+					if( dup2(pipefd4[1], 1) != 1 )
+					{
+					    fprintf(stderr,"%s: ", newargv[0]);
+					    perror("");
+					    exit(1);
+					}
+				    }
+				    else
+				    {
+					if( dup2(pipefd2[1], 1) != 1 )
+					{
+					    fprintf(stderr,"%s: ", newargv[0]);
+					    perror("");
+					    exit(1);
+					}
+				    }
+				}
+				else
+				{
+				    /*send elsewhere*/
+				    if( dup2(pipefd3[1], 1) != 1 )
+				    {
+					fprintf(stderr,"%s: ", newargv[0]);
+					perror("");
+					exit(1);
+				    }
+				}
+			    }
+			    else
+			    {
+				/*recieve from elsewhere*/
+				if( dup2(pipefd[0], 0) != 0 )
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+				if(currCommand->nextCmd->nextCmd != NULL)
+				{
+				    /*send to me type 1*/
+				    if(type1)
+				    {
+					if( dup2(pipefd4[1], 1) != 1 )
+					{
+					    fprintf(stderr,"%s: ", newargv[0]);
+					    perror("");
+					    exit(1);
+					}
+				    }
+				    else
+				    {
+					if( dup2(pipefd2[1], 1) != 1 )
+					{
+					    fprintf(stderr,"%s: ", newargv[0]);
+					    perror("");
+					    exit(1);
+					}
+				    }
+				}
+				else
+				{
+				    /*send elsewhere*/
+				    if( dup2(pipefd3[1], 1) != 1 )
+				    {
+					fprintf(stderr,"%s: ", newargv[0]);
+					perror("");
+					exit(1);
+				    }
+				}
+			    }
+			    close(pipefd[1]);
+			    close(pipefd[0]);
+			    close(pipefd2[1]);
+			    close(pipefd2[0]);
+			    close(pipefd3[1]);
+			    close(pipefd3[0]);
+			    close(pipefd4[1]);
+			    close(pipefd4[0]);
+			    execvp(newargv[0], newargv);
+			    fprintf(stderr, "%s: ", newargv[0] );
+			    perror("");
+			    exit(1);
+			}
+			else
+			{
+			    if(type1)
+			    {
+				close(pipefd2[1]);
+				close(pipefd2[0]);
+			    }
+			    else
+			    {
+				close(pipefd4[1]);
+				close(pipefd4[0]);
+			    }
+			    if( sent == 0)
+			    {
+				close(pipefd[0]);
+				close(pipefd[1]);
+				sent = 1;
+			    }
+			    if( back == 0 )
+				waitpid(id,&stat,0); 
+
+			    if(type1 && currCommand->nextCmd->nextCmd !=NULL)
+			    {
+				pipe(pipefd2);
+				type1 = 0;
+			    }
+			    else if( currCommand->nextCmd->nextCmd !=NULL)
+			    {
+				pipe(pipefd4);
+				type1 = 1;
+			    }
+			}
+			now = 5;
+		    }
+		    else /*no input redirect, output to pipe*/
+		    {
+			int id = fork();	
+			int stat;
+			if(id == 0)
+			{
+			    if( dup2(pipefd[1], 1) != 1 )
+			    {
+				fprintf(stderr,"%s: ", newargv[0]);
+				perror("");
+				exit(1);
+			    }
+			    close(pipefd[1]);
+			    close(pipefd[0]);
+			    execvp(newargv[0], newargv);
+			    fprintf(stderr, "%s: ", newargv[0] );
+			    perror("");
+			    exit(1);
+			}
+			else 
+			{
+			    /*don't close pipe, need it for next command*/
+			    if( back == 0 )
+				waitpid(id,&stat,0);
+			
+			}
+			now = 6;
+		    }
+		}
+		else /*input from file/pipe/stdin out to stdout*/
+		{
+		    if( currCommand->in_redir != NULL) /*file input to std out*/
+		    {
+			pid_t id;
+			int stat;
+			id = fork();
+			if(id == 0)
+			{
+			    int fild;
+			    fild = open(currCommand->in_redir, O_RDONLY, 0444);
+			    if (fild < 0) 
+			    {
+				fprintf(stderr,"%s: ", newargv[0]);
+				perror("");
+				exit(1);
+			    }
+			    if( dup2(fild, 0) != 0 )
+			    {
+				fprintf(stderr,"%s: ", newargv[0]);
+				perror("");
+				exit(1);
+			    }
+			    close(fild);
+			    execvp(newargv[0], newargv);
+			    fprintf(stderr, "%s: ", newargv[0] );
+			    perror("");
+			}
+			else
+			{
+			    if( back == 0 )
+				waitpid(id, &stat, 0);
+			}
+			    now = 7;
+		    }
+		    else if(currCommand->prevCmd != NULL) /*input from pipe, std out*/
+		    {
+			int status;
+			pid_t id;
+			id = fork();
+			if( id == 0 )
+			{
+			    if( q < 0  )
+			    {
+				fprintf(stderr, "%s: %d ", newargv[0],q );
+				perror("");
+				exit(1);
+			    }
+			    if( currCommand->prevCmd->prevCmd != NULL )
+			    {
+				if( dup2(pipefd3[0], 0) != 0 )
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+			    }
+			    else
+			    {
+				if( dup2(pipefd[0], 0) != 0 )
+				{
+				    fprintf(stderr,"%s: ", newargv[0]);
+				    perror("");
+				    exit(1);
+				}
+			    }
+			    close(pipefd3[0]);
+			    close(pipefd3[1]);
+			    close(pipefd[0]);
+			    close(pipefd[1]);
+			    execvp(newargv[0], newargv);
+			    fprintf(stderr, "%s: ", newargv[0] );
+			    perror("");
+			    exit(1);
+			}
+			else
+			{
+			    /*close pipe, finished inputting it*/
+			    close(pipefd3[0]);
+			    close(pipefd3[1]);
+			    close(pipefd[0]);
+			    close(pipefd[1]);
+			    if( back == 0 )
+			    {
+				waitpid(id, &status, 0);
+				/*while( waitpid(id, &status, WNOHANG|WUNTRACED) != id )
+				{*/
+				/*waitpid(id, &status, WNOHANG|WUNTRACED);
+				    if( ID.id = -1)
+				    {
+					ID.id = id;
+					fprintf(stderr, "id set to %d\n", ID.id);
+					ID.nextid = (TID *)malloc(sizeof(TID));
+					ID = *ID.nextid;
+					ID.id = -1;
+				    }
+				    else
+					fprintf(stderr,"Link list error\n");
+				}*/
+				/*continue;*/
+
+			    }
+			    /*{
+				if (errno == ECHILD) 
+				{
+				    printf("echild error\n");
+				    kill(0, 0);
+				    break;
+				} 													    }*/
+			}
+			now = 8;
+		    }
+		    else/*input stdin, out stdout*/
+		    {
+			pid_t id;
+			int status;
+			id = fork();
+			if( id == 0)
+			{
+			    execvp(newargv[0], newargv);
+			    fprintf(stderr, "%s: ", newargv[0] );
+			    perror("");
+			    exit(1);
+			}
+			else
+			{
+			    if( back == 0 )
+				waitpid(id, &status, 0);
+			}
+			now = 9;
+		    }
+		}
+
+
+		/*Move to the next to command to process if it exists*/
+		currCommand = currCommand->nextCmd;
+		if( currCommand != NULL )
+		{
+		    next = currCommand->nextCmd;
+		    newargv = currCommand->argv;
+		}
+		else /*reached the end*/
+		{
+		    break; /*exit this while*/
+		}
+	    }/*end little while*/
+    }/*end big while*/
+    return 0;
+}
+
+void strip( char* line )
+{
+    int i = 0;
+    char * cmd;
+    char * cmdCopy;
+    char spc = ' '; 
+    char sng;
+    int done = 0;
+    /*char * line = malloc( sizeof(char)* length) ;
+    strncpy( line, aline, length-1);
+    line[length] = '\0'; */
+    CMDstatus = COMMAND;   
+    cmdCopy = malloc( sizeof(char)*(strlen(line)) );
+    strcpy(cmdCopy, cmd );
+
+    for( ; i <= strlen(line); i++)
+    {
+	sng = line[i];
+	if( sng == spc  ) 
+	{
+	    cmd = malloc( sizeof(char)*(i+1) );
+	    strncpy( cmd, line, i ); 
+	    line = strchr( line, spc ); 
+	    line++;
+	    while( done == 0 )
+	    {
+		if( strlen(line) > i )
+		{
+		    if( line[i+1] == spc )
+			line++;
+		    else
+			done = 1;
+		}
+		else
+		  done = 1;
+	    }
+	    done = 0;
+	    cmd[i]= '\0';
+	    i = 0;
+	    prevStatus = CMDstatus;
+	    loadCommand( cmd );
+	    procCommand( cmd );
+	    free( cmd);
+	}
+	else if( i == strlen(line)-1 )
+	{
+	    printf("does this get called 1\n");
+	    cmd = malloc( sizeof(char)*(strlen(line)+1) );
+	    strncpy( cmd, line, strlen(line) );
+	    cmd[strlen(line)] = '\0';
+	    prevStatus = CMDstatus;
+	    loadCommand( cmd );
+	    procCommand( cmd );
+	    free(cmd);
+	}
+	else if( i == 1 && strlen(line) == 1 )
+	{
+	    if( line[0] != spc)
+	    {
+		cmd = malloc( sizeof(char)*(strlen(line)+1) );
+		strncpy( cmd, line, strlen(line) );
+		cmd[strlen(line)] = '\0';
+		prevStatus = CMDstatus;
+		loadCommand( cmd );
+		procCommand( cmd );
+		free(cmd);
+	    }
+	}
+    }
+    free(cmdCopy);
+}
+
+
+/*
+#define COMMAND 0  
+#define ARG 1      next string token must be an argument
+#define FLE 2      next string token must be a file
+#define NONE 3   next string token can be anything
+including - argument, file, pipe, background, >, < or >> 
+#define END 4   next string token can be an nothing as in the case of &
+Command status - load command uses this to determine where to put input data into the command struct*/
+
+void procCommand( char* comd )
+{
+
+    switch(prevStatus)
+    {
+	case 0: 
+	    break;
+	case 1:
+	    /*currCommand->argv = malloc( sizeof(char)*strlen(comd) );
+	    currCommand->argv*/
+	    break;
+    }
+
+}
+
+void loadCommand( char* NTD )
+{
+    char first = NTD[0];
+    char pipe = '|';
+    char min = '-';
+    char bg = '&';
+    char streamR = '>';
+    char streamL = '<';
+    char * streamRapp = ">>";
+    printf("token == %s\n", NTD);
+    if(pipe == first ) 
+    {
+	if( pipes == 0 )
+	{   CMDstatus = COMMAND;
+	    pipes++;
+	}
+	else
+	{    
+	    CMDstatus = NEWCOMMAND;
+	    pipes++;
+	}
+
+    }
+    else if( bg == first )
+	CMDstatus = END;
+    else if (streamR  == first)
+	if( strcmp(NTD, streamRapp) == 0 )
+	    CMDstatus = FLE;
+	else
+	    CMDstatus = COMMAND;
+    else if (streamL == first)
+	CMDstatus = FLE;
+    else if (min == first)	
+	CMDstatus = ARG;
+    else
+	CMDstatus = NONE;
+
+    printf("next token should be a %d\n", CMDstatus);
+
+}

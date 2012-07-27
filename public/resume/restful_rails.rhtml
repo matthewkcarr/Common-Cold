@@ -1,0 +1,19 @@
+#NOTE the new use of form_for instead of start_form_tag
+
+<% form_for :user, :url => { :method => :put } do %>
+#do form input calls here
+<%= submit_tag 'SAVE', :class => 'inputSubmit' %>
+<% end %>
+
+
+#alternate
+<% form_for :user, :url => { :method => :delete } do %>
+#do form input calls here
+<%= submit_tag 'SAVE', :class => 'inputSubmit' %>
+<% end %>
+
+
+#and what this will do is add a hidden variable 
+#so if the form action is /blog/destroy
+#you get /blog/destroy?method=delete
+#until there is browser support that is...

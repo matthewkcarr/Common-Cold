@@ -1,0 +1,262 @@
+
+/* globals */
+*, html {
+  background-color: #FFFFFF;
+  font-family: Helvetica, sans-serif;
+  background: transparent;
+}
+body {
+  background-color: #FFFFFF;
+  margin: 0px 0px; 
+  padding: 0px;
+  text-align: center;
+}
+a {
+  text-decoration: none;
+  letter-spacing: -0.05em;
+  color: black;
+  font-size: 0.8em;
+}
+a:visited {
+}
+a:active {
+}
+a:hover {
+  color: #963636;
+}
+
+p {
+  font-size: 0.7em;
+  line-height: 1.5em;
+  color: white;
+  letter-spacing: 0.0em;
+}
+
+p.header {
+  color: black;
+  font-size: 1.5em;
+}
+p.pcontent{ 
+  font-size: 1.0em;
+  color: black;
+}
+
+#main-container {
+  margin: 0px auto;
+  text-align:left;
+  padding: 25px;
+  background-image: url('../images/background.jpg');
+  background-repeat: no-repeat;
+  width: 800px;
+  height: 1500px;
+
+}
+#top-space {
+  height: 2px;
+}
+#logo-click {
+  position: relative;
+  top: 0px;
+  left: -10px;
+  width: 176px;
+  height: 62px;
+}
+#main-nav {
+  text-transform: uppercase;
+  font-size: 1.2em;
+}
+#main-nav p {
+  display: inline;
+}
+#main-nav ul {
+  display: inline;
+  list-style: none;
+}
+#main-nav ul li {
+  display: inline;
+  margin-right: 22px;
+}
+
+#sub-nav {
+  padding-top: 3px;
+  padding-bottom: 7px;
+  font-size: 0.9em;
+  text-transform: uppercase;
+}
+
+#sub-nav p {
+  display: inline;
+}
+#sub-nav ul {
+  display: inline;
+  list-style: none;
+}
+#sub-nav ul li {
+  display: inline;
+  margin-right: 22px;
+}
+ul#sub-history {
+  padding-left: 118px;
+}
+ul#sub-programs {
+  padding-left: 207px;
+}
+ul#sub-help {
+  padding-left: 320px;
+}
+ul#sub-faq {
+  padding-left: 416px;
+}
+ul#sub-links {
+  padding-left: 483px;
+}
+.hov {
+}
+#prog-btn {
+  position: relative;
+  top: -291px;
+  left: 578px;
+  color: transparent;
+}
+#prog-btn:hover {
+  color: white;
+}
+#donate-btn {
+  position: relative;
+  top: -291px;
+  left: 158px;
+  color: transparent;
+}
+#donate-btn:hover {
+  color: white;
+}
+#news-btn {
+  position: relative;
+  top: -54px;
+  left: 176px;
+  color: transparent;
+}
+#news-btn:hover {
+  color: white;
+}
+#content-home {
+  position: relative;
+  top: 0px;
+  left: 0px;
+  margin-top: 10px;
+  margin-left: -9px;
+}
+#news-date {
+  padding-left: 16px;
+  margin-top: -263px;
+}
+#news-content {
+  margin-top: 60px;
+  padding-left: 17px;
+  width: 730px;
+}
+
+/* the background images for conent */
+#body-content {
+  margin-left: -23px;
+}
+#helpdonate {
+  background-image: url('../images/help_donate.jpg');
+  background-repeat: no-repeat;
+  width: 800px;
+  height: 600px;
+}
+#helpdonate_top {
+  padding-top: 100px;
+  padding-left: 50px;
+  color: black;
+}
+#helpdonate_bot {
+  color: black;
+  padding-top: 63px;
+  padding-left: 50px;
+  color: black;
+}
+#donate_btn_2 {
+  width: 80px;
+  position: relative;
+  color: transparent;
+  top: 11px; 
+  left: 45px;
+}
+#donate_btn_2:hover {
+  outline: 2px solid white;
+}
+#newsupdates {
+  background-image: url('../images/news_updates.png');
+  background-repeat: no-repeat;
+  width: 771px;
+  height: 600px;
+}
+/* end the background images for conent */
+p.mass_text {
+  font-size: 1.0em;
+  color: black;
+  padding-top: 107px;
+  padding-left: 52px;
+  width: 672px;
+}
+#clinks {
+  background-image: url('../images/links.png');
+  background-repeat: no-repeat;
+  width: 741px;
+  height: auto;
+}
+div.content_body {
+  padding-left: 60px;
+  padding-top: 40px;
+}
+  
+#cfaq {
+  background-image: url('../images/faq_header.png');
+  background-repeat: no-repeat;
+  width: 681px;
+  height:auto;
+}
+#helpvolunteer {
+  margin-top: -40px;
+  background-image: url('../images/volunteer_header.png');
+  background-repeat: no-repeat;
+  width: 612px;
+  height: auto;
+}
+#cprograms {
+  background-image: url('../images/programs_header.png');
+  background-repeat: no-repeat;
+  width: 713px;
+}
+p.pcontent a, p.mass_text a {
+  font-size: 1.0em;
+  color: #963636;
+}
+#aboutrestore {
+  background-image: url('../images/about_header.png');
+  background-repeat: no-repeat;
+  width: 725px;
+}
+#chistory {
+  background-image: url('../images/history_header.png');
+  background-repeat: no-repeat;
+  width: 685px;
+  height: 814px;
+}
+#aboutwhy {
+  background-image: url('../images/why_header.png');
+  background-repeat: no-repeat;
+  width: 685px;
+}
+#aboutcontact {
+  background-image: url('../images/contact_header.png');
+  background-repeat: no-repeat;
+  width: 685px;
+}
+#downloads {
+  background-image: url('../images/downloads_header.png');
+  background-repeat: no-repeat;
+  width: 685px;
+}

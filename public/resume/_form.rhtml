@@ -1,0 +1,19 @@
+<% #note the start_error_ware_form_element_div is in my helper. You need to create your own or replace this with something else. 
+%>
+<%= start_error_aware_form_element_div :relationship, :relationship_type, :name => 'relationship', :class => 'required'
+%>
+<div id="relationship">
+<label for="relationship_type"></label>
+<br>
+<% for relk, relv in Relationship::Types %>
+<%= form.radio_button :relationship_type, relv %><%= relk %>
+<br>
+<% end %>
+<%= error_message_on :relationship, :relationship_type, "", "", 'error'
+%>
+<%= form.hidden_field :other_user_id, :value => @id %>
+<br>
+<% #button_to 'Add to Contacts', :controller => :relationship, :action => :create, :id => @id, :type => 'contact'
+%>
+</div>
+

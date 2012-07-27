@@ -1,0 +1,160 @@
+#author: Matt Carr
+#note: There are several classes listed below to show how my login system
+#works.
+
+class Person < ActiveRecord::Base
+
+	validates_uniqueness_of :name
+	has_many :comment #, :as => :postable
+	validates_presence_of :name, :first_name, :last_name, :email
+	validates_length_of :password, :within => 5..60
+	validates_length_of :name, :within => 3..20
+	validates_uniqueness_of :name, :email
+        validates_confirmation_of :password, :message => "Please confirm your password"
+	validates_format_of :email, :with => /^([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})$/i, :message => "Invalid email"
+
+
+	def random_password(size = 8)
+	  chars = (('a'..'z').to_a + (0..9).to_a) - %w(i o 0 1 l 0)
+	  (1..size).collect{|a| chars[rand(chars.size)] }.join
+	end
+
+        def set_url(string)
+          @signup_url = string
+        end
+
+        def get_url
+          @signup_url
+        end
+
+	def before_create
+		self.password = Digest::SHA1.hexdigest(password)
+		self.verified = random_password( 24 )
+                set_url( 'http://www.elleandergrey.com/fans/verify?fans[email]=' + self.email + '&fans[verified]=' + self.verified)
+		warn('random pass ' + get_url) if DEBUG
+		warn('email is ' + self.email + ' and name is ' + self.name) if DEBUG
+		Notifier.deliver_signup_notification(self)
+	end
+
+				
+	def change_password
+	end
+
+
+	def self.current( id )
+		find(:first, :conditions => ["id = ?", id] )
+	end
+
+	def handle_password( pw )
+		new_password = Password.new(pw)
+		new_password.check
+	end
+
+	def is_verified?
+		Person.find( :first, :conditions => ["email = ? and verified = '1'", self.email] )
+	end
+
+	def try_to_login
+		Person.login(self.email, self.password)
+	end
+
+	def self.login(email, raw_password)
+		password = Digest::SHA1.hexdigest( raw_password )
+		find( :first, :conditions => ["email = ? and password = ? and verified = '1'", email, password] )
+	end
+
+	def self.verify(verified, email)
+		warn( 'verified is ' + verified) if DEBUG
+		find(:first, :conditions => ["verified = ? and email = ?", verified, email])
+	end
+
+
+	def try_to_verify
+		Person.verify(self.verified, self.email)
+	end
+
+
+	def after_create
+		@password = nil
+	end
+
+end
+
+
+class Fan < Person
+end
+
+
+
+class FansController < ApplicationController
+
+  before_filter :authorize, :except => ['new', 'create', 'verify']
+
+  layout "login"
+  def index
+    list
+    render :action => 'list'
+  end
+
+  # GETs should be safe (see http://www.w3.org/2001/tag/doc/whenToUseGet.html)
+  verify :method => :post, :only => [ :destroy, :create, :update ],
+         :redirect_to => { :action => :list }
+
+  def list
+    @fan_pages, @fans = paginate :fans, :per_page => 10
+  end
+
+  def show
+    @fan = Fan.find(params[:id])
+  end
+
+  def new
+    @fan = Fan.new
+  end
+
+  def verify
+    @fan = Fan.new(params[:fans])
+    #/fans/verify?fans[verified]=gooble&fans[email]=bikokid@gmail.com #this is what we want
+    verified_person = @fan.try_to_verify
+    if verified_person
+      verified_person.verified = "1"
+      verified_person.save
+      session[:user_id] = verified_person.id
+      session[:user_type] = verified_person.type
+      flash[:notice] = "Thank you for verifying your account."
+      redirect_to :controller => 'news', :action => 'index'
+    else
+      warn('person not verified') if DEBUG
+      flash[:notice] = 'Your account could not be verified. If you believe this to be an error on our part please email us at ' + ADMIN_EMAIL
+      redirect_to :controller => 'news', :action => 'index'
+    end
+  end
+
+  def create
+    @fan = Fan.new(params[:fan])
+    if @fan.save
+      flash[:notice] = "We have emailed you. Please find the email and click on the link to verify your account."
+      redirect_to :controller => 'news', :action => 'index'
+    else
+      render :action => 'new'
+    end
+  end
+
+  def edit
+    @fan = Fan.find(params[:id])
+  end
+
+  def update
+    @fan = Fan.find(params[:id])
+    if @fan.update_attributes(params[:fan])
+      flash[:notice] = 'Fan was successfully updated.'
+      redirect_to :action => 'show', :id => @fan
+    else
+      render :action => 'edit'
+    end
+  end
+
+  def destroy
+    Fan.find(params[:id]).destroy
+  end
+end

@@ -1,0 +1,549 @@
+/*@author: Matthew Carr */
+/*@Date: 4/21/04 */
+/*@Desc: Mips Disassembler*/
+
+#include "uMipsDisasm.h"
+
+uMipsDisasm::uMipsDisasm()
+{
+	numregs = 32;
+	numops = 64;
+	numfuncs = 64;
+	headersize = 24;
+        BACKWARDS = 0; //whether or not this file is little or big endian
+
+	regname_array = (char **) calloc(numregs, sizeof(char *));
+	opname_array = (char **) calloc(numops, sizeof(char *));
+	funcname_array = (char **) calloc(numfuncs, sizeof(char *));
+	optype_array = (int *) calloc( numops, sizeof(int) );
+	functype_array = (int *) calloc( numfuncs, sizeof(int) );
+
+	regname_array[0] = "$0 ";
+	regname_array[1] = "$AT";
+	regname_array[2] = "$V0";
+	regname_array[3] = "$V1";
+	regname_array[4] = "$A0";
+	regname_array[5] = "$A1";
+	regname_array[6] = "$A2";
+	regname_array[7] = "$A3";
+	regname_array[8] = "$T0";
+	regname_array[9] = "$T1";
+	regname_array[10] = "$T2";
+	regname_array[11] = "$T3";
+	regname_array[12] = "$T4";
+	regname_array[13] = "$T5";
+	regname_array[14] = "$T6";
+	regname_array[15] = "$T7";
+	regname_array[16] = "$S0";
+	regname_array[17] = "$S1";
+	regname_array[18] = "$S2";
+	regname_array[19] = "$S3";
+	regname_array[20] = "$S4";
+	regname_array[21] = "$S5";
+	regname_array[22] = "$S6";
+	regname_array[23] = "$S7";
+	regname_array[24] = "$T8";
+	regname_array[25] = "$T9";
+	regname_array[26] = "$K0";
+	regname_array[27] = "$K1";
+	regname_array[28] = "$GP";
+	regname_array[29] = "$SP";
+	regname_array[30] = "$FP";
+	regname_array[31] = "$RA";
+
+	opname_array[0] = "FUNC";
+	opname_array[1] = "BGEZ";
+	opname_array[2] = "J";
+	opname_array[3] = "JAL";
+	opname_array[4] = "BEQ";
+	opname_array[5] = "BNE";
+	opname_array[6] = "BLEZ";
+	opname_array[7] = "BGTZ";
+	opname_array[8] = "ADDI";
+	opname_array[9] = "ADDIU";
+	opname_array[10] = "SLTI";
+	opname_array[11] = "SLTIU";
+	opname_array[12] = "ANDI";
+	opname_array[13] = "ORI";
+	opname_array[14] = "XORI";
+	opname_array[15] = "LUI";
+	opname_array[16] = "FUNC";
+	opname_array[32] = "LB";
+	opname_array[33] = "LH";
+	opname_array[34] = "LWL";
+	opname_array[35] = "LW";
+	opname_array[36] = "LBU";
+	opname_array[37] = "LHU";
+	opname_array[38] = "LWR";
+	opname_array[40] = "SB";
+	opname_array[41] = "SH";
+	opname_array[43] = "SW";
+
+	/*RIJ REPRESENTATION - THERE ARE 5 CASES - THIS IS JUST THE MAPPING TO THE DIFFERENT CASES*/
+	optype_array[0] = -1; /*goto functype*/
+	optype_array[1] = -2; /*not defined */
+	optype_array[2] = 5;
+	optype_array[3] = 5;
+	optype_array[4] = 4;
+	optype_array[5] = 4;
+	optype_array[6] = 4;
+	optype_array[7] = 4;
+	optype_array[8] = 4;
+	optype_array[9] = -2;
+	optype_array[10] = 4;
+	optype_array[11] = -2;
+	optype_array[12] = 4;
+	optype_array[13] = 4;
+	optype_array[14] = 4;
+	optype_array[15] = -2; /*not defined*/
+	optype_array[16] = -1; /*goto func def*/
+	optype_array[32] = 4;
+	optype_array[33] = -2;
+	optype_array[34] = -2;
+	optype_array[35] = 4;
+	optype_array[36] = -2;
+	optype_array[37] = -2;
+	optype_array[38] = -2;
+	optype_array[40] = 4;
+	optype_array[41] = -2;
+	optype_array[43] = 4;
+
+
+	funcname_array[0] = "SLL";
+	funcname_array[2] = "SRL";
+	funcname_array[3] = "SRA";
+	funcname_array[4] = "SLLV";
+	funcname_array[6] = "SRLV";
+	funcname_array[7] = "SRAV";
+	funcname_array[8] = "JR";
+	funcname_array[9] = "JALR";
+	funcname_array[12] = "SYSCALL";
+	funcname_array[13] = "BREAK";
+	funcname_array[16] = "MFHI";
+	funcname_array[17] = "MTHI";
+	funcname_array[18] = "MFLO";
+	funcname_array[19] = "MTLO";
+	funcname_array[24] = "MULT";
+	funcname_array[25] = "MULTU";
+	funcname_array[26] = "DIV";
+	funcname_array[27] = "DIVU";
+	funcname_array[32] = "ADD";
+	funcname_array[33] = "ADDU";
+	funcname_array[34] = "SUB";
+	funcname_array[35] = "SUBU";
+	funcname_array[36] = "AND";
+	funcname_array[37] = "OR";
+	funcname_array[38] = "XOR";
+	funcname_array[39] = "NOR";
+	funcname_array[42] = "SLT";
+	funcname_array[43] = "SLTU";
+
+	/*RIJ REPRESENTATION - THERE ARE 5 CASES - THIS IS JUST THE MAPPING TO THE DIFFERENT CASES*/
+	functype_array[0] = 1;
+	functype_array[2] = 1;
+	functype_array[3] = 1;
+	functype_array[4] = 1;
+	functype_array[6] = 1;
+	functype_array[7] = 1;
+	functype_array[8] = 2;
+	functype_array[9] = 1;
+	functype_array[12] = 3;
+	functype_array[13] = 3;
+	functype_array[16] = -2;
+	functype_array[17] = -2;
+	functype_array[18] = -2;
+	functype_array[19] = -2;
+	functype_array[24] = 1;
+	functype_array[25] = -2;
+	functype_array[26] = 1;
+	functype_array[27] = -2;
+	functype_array[32] = 1;
+	functype_array[33] = -2;
+	functype_array[34] = 1;
+	functype_array[35] = -2;
+	functype_array[36] = 1;
+	functype_array[37] = 1;
+	functype_array[38] = 1;
+	functype_array[39] = -2;
+	functype_array[42] = 1;
+	functype_array[43] = -2;
+
+
+}
+
+// some exeptions to the normal rules:
+// 1) opcode 16 with func 24 is a "HALT" instruction
+// 2) opcode 16 with func 32 is a "RFE" instruction
+// 3) instruction 0 (all feilds are 0) is a "nop" instruction
+// 4) Shift instructions that use shamt should print there shift amounts
+//     in addition to the registers that are used
+// 5) J-format should print the address of the instruction
+//     that will be jumped to
+// 6) The branch instructions that compare with zero only use one register
+//     so only that register should be listed
+
+
+/*Take proc- the raw instruction, and store it's values in the struct - store*/
+
+void uMipsDisasm::loadBinary(unsigned int proc, line_struct* store)
+{
+    unsigned int instr;
+    char * sl = (char*)malloc(sizeof(char)*33);
+    instr = (proc >> 26);
+    instr = (instr & (0x0000003f));
+    store->op = opname(instr);
+    store->opcode = instr;
+    store->type = optype(instr);
+    if(store->type == -1) 
+    {
+	instr = proc;
+	store->func = (0x0000003f) & instr;
+	store->op = funcname(store->func);
+	store->type = functype(store->func);
+    }
+    else if( store->type <= 0) 
+    {
+	fprintf(stderr,"Function value %d is undefined in this implementation\n", instr);
+	return; 
+    }
+    instr = proc;
+    switch(store->type) //MAP THIS INSTRUCTION TO ONE OF THE FIVE CASES FOR RIJ TYPES
+    {
+	case 1: //rtype 6bits - 5bits - 5bits - 5bits -5bits - 6bits
+	    instr = instr & (0x03e00000);
+	    instr = instr >> (21);
+	    store->rs = instr;
+	    store->reg1 = regname(instr);
+	    instr = proc;
+	    instr = instr & (0x001f0000);
+	    instr = instr >> (16);
+	    store->rt = instr;
+	    store->reg2 = regname(instr);
+	    instr = proc;
+	    instr = instr & (0x0000f800);
+	    instr = instr >> (11);
+	    store->rd = instr;
+	    store->reg3 = regname(instr);
+	    instr = proc;
+	    instr = instr & (0x000007c0);
+	    instr = instr >> (6);
+	    store->immValue = instr;
+	    store->shamt = instr;
+	    break;
+	case 2: //rtype 6bits - 5bits - 15bits -  6bits
+	    instr = instr & (0x03e00000);
+	    instr = instr >> (21);
+	    store->rs = instr;
+	    store->reg1 = regname(instr);
+	    instr = proc;
+	    instr = instr & (0x001fffc0);
+	    instr = instr >> (6);
+	    store->immValue = instr;
+	    store->rt = instr;
+	    store->rd = instr;
+	    store->reg2 = regname(store->immValue);
+	    store->reg3 = regname(store->immValue);
+	    break;
+	case 3: //rtype 6bits - 20bits - 6bits
+	    instr = instr & (0x03ffffc0);
+	    instr = instr >> (6);
+	    store->twentyBitValue = instr;
+	    store->rs = instr;
+	    store->rt = instr;
+	    store->rd = instr;
+	    store->reg1 = regname(store->twentyBitValue);
+	    store->reg2 = regname(store->twentyBitValue);
+	    store->reg3 = regname(store->twentyBitValue);
+	    break;
+	case 4: //Itype - 6bits - 5bits - 5bits - 16bits/
+	    instr = instr & (0x03e00000);
+	    instr = instr >> (21);
+	    store->reg1 = regname(instr);
+	    store->base = instr;
+	    store->rs = instr;
+	    instr = proc;
+	    instr = instr & (0x001f0000);
+	    instr = instr >> (16);
+	    store->rt = instr;
+	    store->reg2 = regname(instr);
+	    instr = proc;
+	    instr = instr & (0x0000ffff);
+	    store->immValue = instr;
+	    if( signextended( store->op ) == 1 )  
+	    {
+		int tmp = instr & (0x00008000);
+		if( tmp != 0 )
+		{
+		    instr = instr | (0xffff0000); 
+		    store->immValue = instr;
+		    store->immUValue = instr;
+		}
+	    }
+	    break;
+	case 5: //jtype 6bits - 26bits
+	    instr = (instr & (0x03ffffff));
+	    instr = instr << (2);
+	    store->twentySixBitValue = instr;
+	    store->target = instr;
+	    break;
+	default: //no type/
+	    break;
+
+    }
+}
+
+/*DEFINES THE FUNCTIONS THAT HAVE SIGN EXTENSION - returns int 1 if the passed in -op- has sign extension*/
+int uMipsDisasm::signextended(char* op)
+{
+    char* SEFuncs[] = { "ADDI", "BNE","ORI","BEQ","SRA","SRAV","BLEZ","BGTZ","SLTI","LB","LW","SB","SW" };
+    for( int i = 0; i < 13; i++)
+    {
+	if( strcmp( op, SEFuncs[i]) == 0 )
+	    return 1;
+    }
+    return 0;
+}
+
+/*RETURNS THE STRING OF THE NAME OF THE REGISTER SPECIFIED as binary IN THE INSTRUCTION*/
+char *
+uMipsDisasm::regname(int regnum)
+{
+	if( regnum >=0 && regnum < numregs && regname_array[regnum] != NULL )
+	    return regname_array[regnum];
+	else
+	    fprintf(stderr,"Register value %d is undefined in this implementation\n", regnum);
+	    exit(1);
+}
+
+/*RETURNS THE OPERATION CASE TYPE - FOR RIJ TYPES*/
+int
+uMipsDisasm::optype(int opnum)
+{
+	
+	assert(opnum >= 0);
+	assert(opnum < numops);
+	assert(optype_array[opnum] > -3);
+	return optype_array[opnum];
+}
+/*RETURNS THE STRING OF THE NAME OF THE OPERATION SPECIFIED as binary IN THE INSTRUCTION*/
+char *
+uMipsDisasm::opname(int opnum)
+{
+	if( opnum >= 0 && opnum < numops && opname_array[opnum] != NULL )
+	    return opname_array[opnum];
+	else
+	    fprintf(stderr,"Operation value %d is undefined in this implementation\n", opnum);
+}
+
+/*RETURNS THE FUNCTION CASE TYPE - FOR RIJ TYPES*/
+int
+uMipsDisasm::functype(int funcnum)
+{
+	
+	assert(funcnum >= 0);
+	assert(funcnum < numfuncs);
+	assert(functype_array[funcnum] > -3);
+	return functype_array[funcnum];
+}
+/*RETURNS THE STRING OF THE NAME OF THE FUNCTION SPECIFIED as binary IN THE INSTRUCTION*/
+char *
+uMipsDisasm::funcname(int funcnum)
+{
+	if( funcnum >= 0 && funcnum < numfuncs && funcname_array[funcnum] != NULL) 
+	   return funcname_array[funcnum]; 
+       else
+	    fprintf(stderr,"Function value %d is undefined in this implementation\n", funcnum);
+	    exit(1);
+}
+
+/*FOR TESTING PURPOSES - OUTPUTS BINARY REP OF AN INT TO THE SCREEN*/
+/*char * itobs(int n, char *ps)
+{
+    int i;
+    static int size = 8 * sizeof(int);
+
+    for( i = size -1; i >= 0; i--, n>>=1 )
+    {
+	ps[i] = (01 & n) + '0';
+    }
+    ps[size] = '\0';
+    return ps;
+}*/
+
+/*DO BUFFERING FOR ADDRESS CALLS*/
+void uMipsDisasm::buff(int dtext,int memAddr)
+{
+
+    /*if( dtext <=15 )
+	fprintf(stdout,"%05x\t", memAddr);	
+    else if( dtext <=255 )
+	fprintf(stdout,"%04x\t", memAddr);	
+    else if( dtext <=4095 )
+	fprintf(stdout,"%03x\t", memAddr);	
+    else if( dtext <=65535 )
+	fprintf(stdout,"%02x\t", memAddr);	
+    else*/
+	fprintf(stdout,"%08x\t", memAddr);	
+
+}
+/*EXIT THE PROGRAM IF FREAD HAD AN ERROR*/
+void uMipsDisasm::checkfile(int c)
+{
+    if( c == 0 )
+    {
+	fprintf(stderr,"Error reading file.\n");
+	perror("");
+	exit(1);
+    }
+    return;
+}
+
+
+void uMipsDisasm::printHeader()
+{
+    fprintf(stdout, "Magic number : 0x%x\n", magic_num);
+    fprintf(stdout, "Text Segment size : %d\n", textsize);
+    fprintf(stdout,"Data Segment size : %d\n", datasize);
+    fprintf(stdout,"Stack size : %d\n",stacksize);
+    fprintf(stdout,"Heap size : %d\n", heapsize);
+    fprintf(stdout,"Entry is : %d\n", entrypoint);
+
+}
+
+FILE* uMipsDisasm::loadFile(FILE* ofile, int argc, char** argv)
+{
+    ofile = fopen(argv[2], "r"); //file to be read
+    if( argc != 4)
+    {
+	fprintf(stderr,"Incorrect Usage: %s [mode] [filename] [filename]\n",argv[0]);
+	exit(1);
+    }
+    if( errno == 2 )
+    {
+	fprintf(stderr,"%s: ",argv[0]);
+	perror("");
+	exit(1);
+    }
+    unsigned int * in = (unsigned int *)malloc(sizeof(unsigned int)*1);
+    int c = fread( (void*)in, 4, 1, ofile);
+    checkfile(c);
+    unsigned int magic = *in;
+    int afterswap_magic;
+    uMipsDisasm dis = uMipsDisasm();
+    if( magic != MAGIC)
+    {
+	    afterswap_magic = dis.swap_endian( magic );
+	    if( afterswap_magic != MAGIC  && magic != MAGIC)
+	    {
+		fprintf(stderr,"Incorrect file type.\n");
+		exit(1);
+	    }
+	    else
+	    {
+		magic = afterswap_magic;
+		BACKWARDS = 1;
+	    }
+    }
+    int cnt = 0;
+    int anInt;
+	magic_num = magic;
+	c = fread( (void*)in, 4, 1, ofile);
+	checkfile(c);
+	anInt = *in;
+	if(BACKWARDS)
+	    anInt = swap_endian(anInt);
+	cnt = anInt;
+	textsize = anInt;
+	c = fread( (void*)in, 4, 1, ofile);
+	checkfile(c);
+	anInt = *in;
+	if(BACKWARDS)
+	    anInt = swap_endian(anInt);
+	cnt += anInt;
+	cnt /= 4;
+	datasize = anInt;
+	//cnt += anInt/2;
+	c = fread( (void*)in, 4, 1, ofile);
+	checkfile(c);
+	anInt = *in;
+	if(BACKWARDS)
+	    anInt = swap_endian(anInt);
+	stacksize = anInt;
+	c = fread( (void*)in, 4, 1, ofile);
+	checkfile(c);
+	anInt = *in;
+	if(BACKWARDS)
+	    anInt = swap_endian(anInt);
+	heapsize = anInt;
+	c = fread( (void*)in, 4, 1, ofile);
+	checkfile(c);
+	anInt = *in;
+	if(BACKWARDS)
+	    anInt = swap_endian(anInt);
+	entrypoint = anInt;
+	return ofile;
+}
+int uMipsDisasm::loadMem( FILE * mem )
+{
+    unsigned int * in = (unsigned int *) malloc(sizeof(unsigned int) *1);
+    //printf("here\n");
+    int err;
+    err = fread( (void*)in, 4, 1, mem); 
+    checkfile(err);
+    int instruction = *in;
+    if(BACKWARDS)
+    {
+	instruction = swap_endian(instruction);
+    }
+    return instruction;
+}
+/*READ THE FILE, LOAD THE INSTRUCTION, AND OUTPUT THE DISASSAMBLED RESULT*/
+line_struct * uMipsDisasm::loadInstruction( FILE * mem, line_struct * cache, long pos )
+{
+    unsigned int * in = (unsigned int *) malloc(sizeof(unsigned int) *1);
+    //printf("here\n");
+    int err;
+    fseek(mem, pos, SEEK_SET); 
+    err = fread( (void*)in, 4, 1, mem); 
+    checkfile(err);
+    unsigned int instruction = *in;
+    if(BACKWARDS)
+    {
+	instruction = swap_endian(instruction);
+    }
+    loadBinary(instruction, cache);
+    return cache;
+}
+void uMipsDisasm::printInstruction(line_struct * line)
+{
+    int n = line->type;
+    switch(n)
+    {
+	case 1:
+	    if( strcmp(line->op,"SLL") != 0 )
+		fprintf(stdout,"%s\t%s, %s, %s\n",line->op,line->reg3,line->reg1,line->reg2);
+	    else
+	    {
+		fprintf(stdout,"\t%d\n", line->immValue);
+	    }
+	    break;
+	case 2:
+	    fprintf(stdout, "%s\t%s, %s, %s\n",line->op,line->reg3,line->reg1,line->reg2);
+	    break;
+	case 3:
+	    fprintf(stdout, "%s\t%s, %s, %s\n",line->op,line->reg3,line->reg1,line->reg2);
+	    break;
+	case 4:
+	    fprintf(stdout, "%s\t%s, %s, %d\n",line->op,line->reg2,line->reg1,line->immValue);
+	    break;
+	case 5:
+	    fprintf(stdout, "%s\t0x",line->op);
+	    buff(line->twentySixBitValue,line->twentySixBitValue);
+	    fprintf(stdout,"\n");
+	    break;
+	default:	
+	    //fprintf(sterr, "Not showing type of %d\n", n);
+	    break;
+    }
+} 
+

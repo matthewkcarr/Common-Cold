@@ -1,0 +1,790 @@
+<?
+defined( '_VALID_MOS' ) or die( 'Direct Access to this location is not allowed.' );
+
+
+//author: Matt Carr
+//notes: Used for Mambo ver. 4 Website may be down for maintainance to convert
+//to mambo 5.
+
+global $database;
+
+// get configuration information
+
+$myid = $my->id;
+$database->setQuery("SELECT * FROM #__films WHERE director_id = '$myid'");
+$rows = $database->loadObjectList();
+$Itemid = mosGetParam($_GET, 'Itemid', '');
+$option = mosGetParam($_GET, 'option', '');
+$storage = $mosConfig_absolute_path;
+$currLink = $mosConfig_live_site . '/index.php?option=' . $option . '&Itemid=' . $Itemid;
+$row = $rows[0];
+//index.php?option=com_content&task=view&id=22&Itemid=50
+//$option = trim( strtolower( mosGetParam( $_REQUEST, 'option' ) ) );
+?>
+<?
+//To get id
+//$id = mosGetParam( $_GET, 'id', 0 );
+
+$tsk = mosGetParam($_GET, 'tsk', '');
+$film_id = mosGetParam($_GET, 'film_id', '');
+if( $tsk == 'delete' && $Itemid == 30 ) //edit individual
+{
+	$sql = "DELETE FROM #__films WHERE film_id = '$film_id'"; 
+        $database->setQuery( $sql );
+        if (!$database->query()) {
+                die("SQL error" . $database->stderr(true));
+        }
+	$database->setQuery("SELECT * FROM #__films WHERE director_id = '$myid'");
+	$rows = $database->loadObjectList();
+}
+if( $tsk == 'edit' || $tsk == 'editsubmit' && $Itemid == 30 ) //edit individual
+{
+	if($tsk == 'editsubmit')
+	{
+		import_request_variables("p", "var");
+		if($varcancel)
+		{
+			mosRedirect('index.php');
+			break;
+		}
+		echo '</br>Film Updated! </br>';
+		
+	}
+	else
+	{
+		$database->setQuery("SELECT * FROM #__films WHERE film_id = '$film_id'");
+		$rows = $database->loadObjectList();
+		$row = $rows[0];
+//begin?>
+	<script language="javascript"><!--
+	function theonload() 
+	{
+		//document.theform.genre.options['comedy'].selected=true;
+		//document.theform.year.options[1987].selected=true;
+	//<body onload="javascript:theonload()">
+	}
+	//--></script>
+		<form name='theform' enctype="multipart/form-data" method="post" action="index.php?option=com_dailymessage&Itemid=30&tsk=editsubmit">
+		<table width="412" border="0" cellpadding="0" cellspacing="0">
+		  <!--DWLayoutTable-->
+		  <tr>
+		    <td width="116" height="525" valign="top"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+			<!--DWLayoutTable-->
+			<tr>
+			  <td width="116" height="25" valign="top">Film Title:</td>
+			</tr>
+			<tr>
+			  <td height="1"></td>
+			</tr>
+			<tr>
+			  <td height="25" valign="top">Directed By: </td>
+			</tr>
+			<tr>
+			  <td height="25" valign="top">Produced By: </td>
+			</tr>
+			<tr>
+			  <td height="25" valign="top">Written By: </td>
+			</tr>
+			<tr>
+			  <td height="25" valign="top">Date Made: </td>
+			</tr>
+			<tr>
+			  <td height="25" valign="top">Genre:</td>
+			</tr>
+			<tr>
+			  <td height="139" valign="top">Cast:</td>
+			</tr>
+			<tr>
+			  <td height="137" valign="top">Synopsis:</td>
+			</tr>
+			<tr>
+			  <td height="25" valign="top">Icon Image: </td>
+			</tr>
+			<tr>
+			  <td height="25" valign="top">Movie File:</td>
+			</tr>
+			<tr>
+			  <td height="48">&nbsp;</td>
+			</tr>
+			    </table></td>
+		    <td width="296" valign="top"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+			<!--DWLayoutTable-->
+			<tr>
+			  <td height="25" colspan="3" valign="top">
+			    <input name="title" type="text" value="<?php echo $row->title?>" class="inputbox">
+			  </td>
+			</tr>
+			<tr>
+			  <td height="25" colspan="3" valign="top">
+			    <input type="text" name="director" value="<?php echo $row->director_name?>" class="inputbox">
+			  </td>
+			</tr>
+			<tr>
+			  <td height="25" colspan="3" valign="top">
+			    <input type="text" name="producer" value="<?php echo $row->producer?>" class="inputbox">
+			  </td>
+			</tr>
+			<tr>
+			  <td height="25" colspan="3" valign="top">
+			    <input type="text" name="writer" value="<?php echo $row->writer;?>" class="inputbox">
+			  </td>
+			</tr>
+			<tr>
+			  <td width="148" height="25" valign="top">
+			      <select name="month" class="dropdownbox">
+			      <option value="1">January</option>
+			      <option value="2">February</option>
+			      <option value="3">March</option>
+			      <option value="4">April</option>
+			      <option value="5">May</option>
+			      <option value="6">June</option>
+			      <option value="7">July</option>
+			      <option value="8">August</option>
+			      <option value="9">September</option>
+			      <option value="10">October</option>
+			      <option value="11">November</option>
+			      <option value="12">December</option>
+			    </select> 
+			    Month 
+			  </td>
+			  <td colspan="2" valign="top">
+			   <select name="year" class="dropdownbox">
+			      <option value="1970">1970</option>
+			      <option value="1971">1971</option>
+			      <option value="1972">1972</option>
+			      <option value="1973">1973</option>
+			      <option value="1974">1974</option>
+			      <option value="1975">1975</option>
+			      <option value="1976">1976</option>
+			      <option value="1978">1978</option>
+			      <option value="1979">1979</option>
+			      <option value="1980">1980</option>
+			      <option value="1981">1981</option>
+			      <option value="1982">1982</option>
+			      <option value="1983">1983</option>
+			      <option value="1984">1984</option>
+			      <option value="1985">1985</option>
+			      <option value="1986">1986</option>
+			      <option value="1987">1987</option>
+			      <option value="1988">1988</option>
+			      <option value="1989">1989</option>
+			      <option value="1990">1990</option>
+			      <option value="1991">1991</option>
+			      <option value="1992">1992</option>
+			      <option value="1993">1993</option>
+			      <option value="1994">1994</option>
+			      <option value="1995">1995</option>
+			      <option value="1996">1996</option>
+			      <option value="1997">1997</option>
+			      <option value="1998">1998</option>
+			      <option value="1999">1999</option>
+			      <option value="2000">2000</option>
+			      <option value="2001">2001</option>
+			      <option value="2002">2002</option>
+			      <option value="2003">2003</option>
+			      <option value="2004">2004</option>
+			      <option value="2005">2005</option>
+			    </select>
+		year          
+			  </td>
+			</tr>
+			<tr>
+			  <td height="25" colspan="3" valign="top">
+			    <select name="genre" class="dropdownbox">
+			      <option value="action">action</option>
+			      <option value="animation">animation</option>
+			      <option value="adventure">adventure</option>
+			      <option value="advertisement">advertisement</option>
+			      <option value="comedy">comedy</option>
+			      <option value="documentary">documentary</option>
+			      <option value="drama">drama</option>
+			      <option value="experimental">experimental</option>
+			      <option value="extreme">extreme</option>
+			      <option value="fantasy">fantasy</option>
+			      <option value="film noir">film noir</option>
+			      <option value="foreign">foreign</option>
+			      <option value="gangster">gangster</option>
+			      <option value="historical">historical</option>
+			      <option value="horror">horror</option>
+			      <option value="musical">musical</option>
+			      <option value="mystery">mystery</option>
+			      <option value="romance">romance</option>
+			      <option value="romantic comedy">romantic comedy</option>
+			      <option value="science fiction">science fiction</option>
+			      <option value="short">short</option>
+			      <option value="suspense">suspense</option>
+			      <option value="western">western</option>
+			      <option value="other">other</option>
+			    </select>
+			  </td>
+			</tr>
+			<tr>
+			  <td height="140" colspan="3" valign="top">
+			    <textarea name="cast" cols="35" rows="7" class="inputbox" value="<?php print $row->cast;?>"></textarea>
+			  </td>
+			</tr>
+			<tr>
+			  <td height="137" colspan="3" valign="top">
+			    <textarea name="textarea" cols="35" rows="7" class="inputbox" value="<?php print $row->synopsis;?>"></textarea>
+			  </td>
+			</tr>
+			<tr>
+			  <td height="25" colspan="3" valign="top">
+			    <input name="image" type="file" value="(100 x 85) pixels" class="inputbox">
+			  </td>
+			</tr>
+			<tr>
+			  <td height="25" colspan="3" valign="top">
+				<?php echo $row->movieFileName; ?>
+			  </td>
+			</tr>
+			<tr>
+			  <td rowspan="2" valign="top"><!--DWLayoutEmptyCell-->&nbsp;</td>
+			  <td height="21" colspan="2" valign="top"><!--DWLayoutEmptyCell-->&nbsp;</td>
+			</tr>
+			<tr>
+			  <td width="66" height="27" valign="top">
+		<? //<form name="form13" method="post" action="index.php"> ?>
+			    <input type="submit" name="cancel" value="Cancel" class="button">
+			  </td>
+			  <td width="82" valign="top">
+			    <input name="submit" type="submit" id="submit" value="Edit" class="button">
+			  </td>
+			</tr> 
+				</table></td>
+		  </tr>
+		</table>
+		</form>
+</body>
+<?//end	
+	}
+}
+else if( $Itemid == 30) //its the film control
+{
+	?>
+<SCRIPT language=JavaScript><!--
+
+    function MsgOkCancel(txt)
+    {
+      var fRet;
+      fRet = confirm('Are you sure?');
+      if(fRet)
+	window.location.href = txt;
+    }
+
+//--></SCRIPT>
+<p>&nbsp;</p>
+<table width="600" border="0">
+      <tr>
+        <td width="100" ><div align="center"><p><b>Film</b></p></div></td>
+        <td width="133" ><div align="center"><b>Title</b></div></td>
+        <td width="157" ><div align="center"><b>Director</div></td>
+        <td width="68" ><div align="center"><b>Date</div></td>
+        <td width="120" ><div align="center"><b>Options</div></td>
+      </tr>
+
+<?
+
+	foreach($rows as $row)
+	{
+		//echo '<code><tr><td height="86"><img src="./users/' . $my->id . '/images/' . $row->filmImageLocation . '" width="100" height="85"></td></code>';
+		if( $row->imageFileName == NULL )
+			echo '<tr><td height="86"><img src="./defaults/default.png" width="100" height="85"></td>';
+		else //might need to fix this case
+			echo '<tr><td height="86"><img src="./users/' . $my->id . '/images/' . $row->imageFileName . '" width="100" height="85"><p></p></td>';
+		echo '<td><div align="center">' . $row->title . '&nbsp;' . '</div></td>';
+		echo '<td><div align="center">' . $row->director_name . '&nbsp;'. '</div></td>';
+		echo '<td><div align="center">' . mosFormatDate($row->datemade) . '&nbsp;' . '</div></td>';
+		echo '<td><div align="center"><p><br><A href="' . $currLink . '&tsk=edit&film_id=' . $row->film_id . '"><u>edit</u></a></p>';
+	?>	<p><A href="javascript:MsgOkCancel('<?php echo $currLink . "&tsk=delete&film_id=" . $row->film_id;?>')"><u>delete</u></a></p>&nbsp; </div></td><?
+		echo '</tr>';
+	}
+
+	?>
+	</table>
+	<?
+	//mosRedirect( 'index2.php?option=com_categories&section='. $section, 'You must create a category first.');
+
+}
+if( $Itemid == 31 && $tsk == NULL ) //its the submit part
+{
+	//echo 'submit film';
+?>
+
+<form enctype="multipart/form-data" method="post" action="index.php?option=com_dailymessage&Itemid=31&tsk=upfilm">
+<table width="412" border="0" cellpadding="0" cellspacing="0">
+  <!--DWLayoutTable-->
+  <tr>
+    <td width="116" height="525" valign="top"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <!--DWLayoutTable-->
+        <tr>
+          <td width="116" height="25" valign="top">Film Title:</td>
+        </tr>
+        <tr>
+          <td height="1"></td>
+        </tr>
+        <tr>
+          <td height="25" valign="top">Directed By: </td>
+        </tr>
+        <tr>
+          <td height="25" valign="top">Produced By: </td>
+        </tr>
+        <tr>
+          <td height="25" valign="top">Written By: </td>
+        </tr>
+        <tr>
+          <td height="25" valign="top">Date Made: </td>
+        </tr>
+        <tr>
+          <td height="25" valign="top">Genre:</td>
+        </tr>
+        <tr>
+          <td height="139" valign="top">Cast:</td>
+        </tr>
+        <tr>
+          <td height="137" valign="top">Synopsis:</td>
+        </tr>
+        <tr>
+          <td height="25" valign="top">Icon Image: </td>
+        </tr>
+        <tr>
+          <td height="25" valign="top">Movie File:</td>
+        </tr>
+        <tr>
+          <td height="48">&nbsp;</td>
+        </tr>
+            </table></td>
+    <td width="296" valign="top"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <!--DWLayoutTable-->
+        <tr>
+          <td height="25" colspan="3" valign="top">
+            <input name="title" type="text" value="" class="inputbox">
+          </td>
+        </tr>
+        <tr>
+          <td height="25" colspan="3" valign="top">
+            <input type="text" name="director" value="Firstname Lastname" class="inputbox">
+          </td>
+        </tr>
+        <tr>
+          <td height="25" colspan="3" valign="top">
+            <input type="text" name="producer" class="inputbox">
+          </td>
+        </tr>
+        <tr>
+          <td height="25" colspan="3" valign="top">
+            <input type="text" name="writer" class="inputbox">
+          </td>
+        </tr>
+        <tr>
+          <td width="148" height="25" valign="top">
+            <select name="month" class="dropdownbox">
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select> 
+            Month
+          </td>
+          <td colspan="2" valign="top">
+            <select name="year" class="dropdownbox">
+              <option value="1970">1970</option>
+              <option value="1971">1971</option>
+              <option value="1972">1972</option>
+              <option value="1973">1973</option>
+              <option value="1974">1974</option>
+              <option value="1975">1975</option>
+              <option value="1976">1976</option>
+              <option value="1978">1978</option>
+              <option value="1979">1979</option>
+              <option value="1980">1980</option>
+              <option value="1981">1981</option>
+              <option value="1982">1982</option>
+              <option value="1983">1983</option>
+              <option value="1984">1984</option>
+              <option value="1985">1985</option>
+              <option value="1986">1986</option>
+              <option value="1987">1987</option>
+              <option value="1988">1988</option>
+              <option value="1989">1989</option>
+              <option value="1990">1990</option>
+              <option value="1991">1991</option>
+              <option value="1992">1992</option>
+              <option value="1993">1993</option>
+              <option value="1994">1994</option>
+              <option value="1995">1995</option>
+              <option value="1996">1996</option>
+              <option value="1997">1997</option>
+              <option value="1998">1998</option>
+              <option value="1999">1999</option>
+              <option value="2000">2000</option>
+              <option value="2001">2001</option>
+              <option value="2002">2002</option>
+              <option value="2003">2003</option>
+              <option value="2004">2004</option>
+              <option value="2005">2005</option>
+            </select>
+year          
+          </td>
+        </tr>
+        <tr>
+          <td height="25" colspan="3" valign="top">
+            <select name="genre" class="dropdownbox">
+              <option value="action">action</option>
+              <option value="animation">animation</option>
+              <option value="adventure">adventure</option>
+              <option value="advertisement">advertisement</option>
+              <option value="comedy">comedy</option>
+              <option value="documentary">documentary</option>
+              <option value="drama">drama</option>
+              <option value="experimental">experimental</option>
+              <option value="extreme">extreme</option>
+              <option value="fantasy">fantasy</option>
+              <option value="film noir">film noir</option>
+              <option value="foreign">foreign</option>
+              <option value="gangster">gangster</option>
+              <option value="historical">historical</option>
+              <option value="horror">horror</option>
+              <option value="musical">musical</option>
+              <option value="mystery">mystery</option>
+              <option value="romance">romance</option>
+              <option value="romantic comedy">romantic comedy</option>
+              <option value="science fiction">science fiction</option>
+              <option value="short">short</option>
+              <option value="suspense">suspense</option>
+              <option value="western">western</option>
+              <option value="other">other</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td height="140" colspan="3" valign="top">
+            <textarea name="cast" cols="35" rows="7" class="inputbox"></textarea>
+          </td>
+        </tr>
+        <tr>
+          <td height="137" colspan="3" valign="top">
+            <textarea name="textarea" cols="35" rows="7" class="inputbox"></textarea>
+          </td>
+        </tr>
+        <tr>
+          <td height="25" colspan="3" valign="top">
+            <input name="image" type="file" value="(100 x 85) pixels" class="inputbox">
+          </td>
+        </tr>
+        <tr>
+          <td height="25" colspan="3" valign="top">
+            <input name="movie" type="file" value="(mpg, mov, wmv)" class="inputbox">
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="2" valign="top"><!--DWLayoutEmptyCell-->&nbsp;</td>
+          <td height="21" colspan="2" valign="top"><!--DWLayoutEmptyCell-->&nbsp;</td>
+        </tr>
+        <tr>
+          <td width="66" height="27" valign="top">
+<? //<form name="form13" method="post" action="index.php"> ?>
+            <input type="submit" name="cancel" value="Cancel" class="button">
+          </td>
+          <td width="82" valign="top">
+            <input name="submit" type="submit" id="submit" value="Submit" class="button">
+          </td>
+        </tr> 
+                </table></td>
+  </tr>
+</table>
+</form>
+<?
+} 
+else if($Itemid == 31 && $tsk == "upfilm")
+{
+	import_request_variables("p", "var");
+	if($varcancel)
+	{
+		mosRedirect('index.php');
+		break;
+	}
+	
+	/*print $vartitle . '<br>';
+	print $vardirector . '<br>'; 	
+	print $varproducer . '<br>';
+	print $varwriter . '<br>';
+	print $varmonth . '<br>';
+	print $varyear . '<br>';
+	print $vargenre . '<br>';
+	print $vartextarea . '<br>';
+	print $varcast . '<br>';
+	print $varimage . '<br>';
+	print $varmovie . '<br>';*/
+	$tmp = explode( '.', $_FILES['image']['name']);
+	$fileext1 = $tmp[count($tmp)-1];
+	$tmp = explode ( '.', $_FILES['movie']['name']);
+	$fileext2 = $tmp[count($tmp)-1];
+	//$allowedexts = array("rpm", "gz", "tar", "bz2");
+	/*if (in_array($fileext, $allowedexts)) {
+		print "File is trusted.";
+	} else {
+        print "File not trusted!";
+	}*/
+	$defaultImage = $storage . '/defaults/default.png';
+	$directory = $storage . '/users/' . $my->id;
+	$imageLocation = $directory . '/images/image';
+	$movieLocation = $directory . '/films/movie';
+	$imageName = '';
+	$movieName = '';
+	$i=0;
+	$j=0;
+	$s=0;
+	while( true )
+	{
+		if (file_exists($imageLocation . $i . '.' . $fileext1)) 
+		{
+			$i++;
+		} 
+		else {
+			$imageName = 'image' . $i . '.' . $fileext1;
+			$imageLocation = $imageLocation . $i . '.' . $fileext1;
+			if( $imageName == 'image0.')
+			{		
+				$imageName = '../../../defaults/default.png';
+			}
+			break;
+		}
+	}
+	while(true)
+	{
+		if (file_exists($movieLocation . $j . '.' . $fileext2)) 
+		{
+			$j++;
+		} 
+		else {
+			$movieLocation = $movieLocation . $j . '.' . $fileext2;
+			$movieName = 'movie' . $j . '.' . $fileext2;
+			break;
+		}
+	}
+	//print $_FILES['movie']['name'] . ' and ' . $_FILES['movie']['size'] . '<br>';
+	//print "Received {$_FILES['image']['name']} - its size is {$_FILES['image']['size']} <br>";
+	if(file_exists($directory)) 
+	{
+		if (move_uploaded_file($_FILES['image']['tmp_name'], $imageLocation)) 
+		{
+			print "Received your image. <br>";
+			chmod($imageLocation, 0755); 
+		} 
+		else 
+		{
+			print "We did not receive your image. A default image will be used. <br>";
+			//if(move_uploaded_file($defaultImage, $imageLocation))
+                        //echo "couldn't moved $defaultImage to $imageLocation";
+		}
+		if (move_uploaded_file($_FILES['movie']['tmp_name'], $movieLocation)) 
+		{
+			print "Received your film. <br> Thank you.";
+			chmod($movieLocation, 0755); 
+		} 
+		else 
+		{
+			print "We did not recieve your film.<br>";
+		}
+	}
+	else
+	{
+		mkdir($directory, 0777 );
+		$dtmp = $directory . '/images';
+		mkdir($dtmp, 0777 );
+		$directory .= '/films';
+		mkdir($directory, 0777 );
+		if (move_uploaded_file($_FILES['image']['tmp_name'], $imageLocation)) 
+		{
+			print "<br>Recieved your image. <br>";
+			chmod($imageLocation, 0755); 
+		} 
+		else 
+		{
+			print "We did not recieve your image. A default will be used.<br>";
+			//if(move_uploaded_file($defaultImage, $imageLocation))
+		//	;
+                 //       echo "couldn't moved $defaultImage to $imageLocation";
+		}
+		if (move_uploaded_file($_FILES['movie']['tmp_name'], $movieLocation)) 
+		{
+			print "Recieved your film. <br> Thank you.";
+			chmod($movieLocation, 0755); 
+		} 
+		else 
+		{
+			print "We did not recieve your film. <br>";
+		}
+	}
+	$vardatemade = $varyear . '-' . $varmonth . '-01';
+	$size = $_FILES['movie']['size'];
+	$dId = $my->id;
+	//do DB stuff
+	$sql = "INSERT INTO #__films(film_id, title, director_id, producer, writer, cast, datemade, synopsis, movieFileName, imageFileName, published, genre, director_name, size, downloaded, dateuploaded) VALUES ( NULL, '$vartitle', '$dId', '$varproducer','$varwriter', '$varcast', '$vardatemade', '$vartextarea', '$movieName', '$imageName', '0', '$vargenre', '$director', '$size', '0', NOW() )"; 
+        $database->setQuery( $sql );
+        if (!$database->query()) {
+                die("SQL error" . $database->stderr(true));
+        }
+}
+if( $Itemid == 32 )
+{
+
+
+$database->setQuery("SELECT * FROM #__films WHERE film_id=" . $film_id ); 
+$rows = $database->loadObjectList();
+$row = $rows[0];
+$movieURL = './users/' . $row->director_id . '/films/' . $row->movieFileName;
+$clicked = false;
+$currLink .= '&film_id=' . $film_id;
+//$Itemid = mosGetParam($_GET, 'Itemid', '');
+?>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+function download() {
+    // perform something processing in here
+	
+<?php if($tsk == 'dl' )
+      {	
+	      $downloads = $row->downloaded + 1;
+	      $sql = "UPDATE #__films SET downloaded = '$downloads' WHERE film_id = $row->film_id";
+	      $database->setQuery($sql);
+	      if (!$database->query()) {
+			die("SQL error " . $database->stderr(true));
+		}
+	$tsk = '';
+     }
+?>
+	window.location.href = '<?php echo $currLink . '&tsk=dl'; ?>';
+window.open('<?php echo $movieURL?>','download','location=no,menubar=no');
+}
+//--></SCRIPT>
+<p class="contentheading">&#160;&#160;<?php echo $row->title . '&#160;&#160;&#160;&#160;(' . $row->genre . ')'; ?></p>
+	<table width="380" border="0" cellpadding="0" cellspacing="0">
+	  <!--DWLayoutTable-->
+	  <tr>
+	    <td width="85" rowspan="3" valign="top"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+	      <!--DWLayoutTable-->
+	      <tr>
+		<td width="100" height="85" valign="top"><img src="<?php echo './users/' . $row->director_id . '/images/' . $row->imageFileName; ?>" width="100" height="85"></td>
+	      </tr>
+	      <tr>
+		<td height="33" valign="top">
+		<div align="center"<A HREF="javascript:download()">(download)</a></div>
+<?/*<FORM>
+<INPUT TYPE="BUTTON" VALUE="Download" onClick="download()">
+</FORM>*/?>
+		</td>
+	      </tr>
+	    </table></td>
+	    <td width="10" rowspan="3" valign="top"><!--DWLayoutEmptyCell-->&nbsp;</td>
+	    <td height="55" colspan="2" valign="top"><p><div align="right"><a href="<?php echo $mosConfig_live_site . '/index.php?option=&Itemid=33&director_id=' . $row->director_id ?>">Filmmaker Profile</a></div></p>
+	    <span class="sectiontableheader">Produced By:</span><span class="sectiontableentry3"><?php echo ' ' . $row->producer; ?></span></td>
+	  </tr>
+	  <tr>
+	    <td height="51" colspan="2" valign="top"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+	      <!--DWLayoutTable-->
+	      <tr>
+		<td width="285" height="13"></td>
+		</tr>
+	      <tr>
+		<td height="23" valign="top"><span class="sectiontableheader">Directed by:</span><span class="sectiontableentry3"><?php echo '   ' .$row->director_name; ?></span></td>
+	      </tr>
+	      <tr>
+		<td height="15"></td>
+	      </tr>
+	    </table></td>
+	  </tr>
+	  <tr>
+	    <td height="27" colspan="2" valign="top"><span class="sectiontableheader">Written by:</span><span class="sectiontableentry3"><?php echo '   ' . $row->writer; ?></span> </td>
+	  </tr>
+	  <tr>
+	    <td height="18" colspan="4" valign="top"><!--DWLayoutEmptyCell-->&nbsp;</td>
+	  </tr>
+	  <tr>
+	    <td height="23" valign="top"><div align="center"><?php echo $row->size . ' Bytes'; ?></div> </td>
+	    <td></td>
+	    <td width="148" valign="top"><span class="sectiontableheader">Date Made:</span><span class="sectiontableentry3"><?php echo '    ' . $row->datemade; ?></span></td>
+	    <td width="137" valign="top"></td>
+	  </tr>
+	  <tr>
+	    <td height="22" valign="top"><div align="center" class="sectiontableheader1">Viewed:</div></td>
+	    <td></td>
+	    <td valign="top"><!--DWLayoutEmptyCell-->&nbsp;</td>
+	    <td valign="top"></td>
+	  </tr>
+	  <tr>
+	    <td rowspan="2" valign="top"><div align="center"><?php echo $row->downloaded . '  ';?> times.</div> </td>
+	    <td height="14"></td>
+	    <td colspan="2" valign="top"><!--DWLayoutEmptyCell-->&nbsp;</td>
+	  </tr>
+	  <tr>
+	    <td height="42"></td>
+	    <td colspan="2" rowspan="2" valign="top"><span class="componentheading">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Synopsis</span><p><?php echo $row->synopsis;?></p></td>
+	  </tr>
+	  <tr>
+	    <td height="76">&nbsp;</td>
+	    <td></td>
+	  </tr>
+	  <tr>
+	    <td height="124">&nbsp;</td>
+	    <td></td>
+	    <td colspan="2" valign="top"><span class="componentheading">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Cast</span><p><?php echo $row->cast;?></p></td>
+	  </tr>
+	</table>
+
+
+	<?	
+		
+
+	}
+	//next do genre/director profile
+if( $Itemid == 33 )
+{
+	$director_id = mosGetParam($_GET, 'director_id', '');
+	$database->setQuery("SELECT * FROM #__users WHERE id = '$director_id'");
+	$rows = $database->loadObjectList();
+	$row = $rows[0];
+	$namef = $row->name;
+	?>
+	<p class="contentheading">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<?php echo $namef ?></p>
+	<?php $database->setQuery("SELECT * FROM #__films WHERE director_id = '$director_id'");
+	$rows = $database->loadObjectList();?>
+<table width="600" border="0">
+      <tr>
+        <td width="100" ><div align="center"><p><b>Film</b></p></div></td>
+        <td width="133" ><div align="center"><b>Title</b></div></td>
+        <td width="157" ><div align="center"><b>Director</div></td>
+        <td width="68" ><div align="center"><b>Date Made</div></td>
+        <td width="120" ><div align="center"><b>Genre</div></td>
+      </tr>
+
+<?
+
+	foreach($rows as $row)
+	{
+		//echo '<code><tr><td height="86"><img src="./users/' . $my->id . '/images/' . $row->filmImageLocation . '" width="100" height="85"></td></code>';
+		/*if( $row->imageFileName == NULL )
+			echo '<tr><td height="86"><img src="./defaults/default.png" width="100" height="85"></td>';*/
+		//might need to fix this case
+		?>	<tr><td height="86"><a href="<?php echo $mosConfig_live_site . '/index.php?option=&Itemid=32&film_id=' . $row->film_id . '">';?><img src="<?php echo './users/' . $row->director_id . '/images/' . $row->imageFileName . '" width="100" height="85"></a><p></p></td>';
+
+		?><td><div align="center"><a href="<?php echo $mosConfig_live_site . '/index.php?option=&Itemid=32&film_id=' . $row->film_id . '">';
+                echo $row->title . '&nbsp;' . '</a></div></td>';
+		echo '<td><div align="center">' . $row->director_name . '&nbsp;'. '</div></td>';
+		echo '<td><div align="center">' . $row->datemade . '&nbsp;'. '</div></td>';
+		echo '<td><div align="center">' . $row->genre . '&nbsp;'. '</div></td>';
+	}
+}
+	
+/*
+
+//director and genre profile style */ ?>

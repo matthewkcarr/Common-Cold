@@ -1,0 +1,49 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Common Cold Inc.</title>
+<%= stylesheet_link_tag 'commoncold', :cache => 'commoncold-css' %>
+
+  <% if @content_for_page_stylesheet -%>
+    <%= @content_for_page_stylesheet %>
+  <% end -%>
+ <% if @content_for_page_javascript -%>
+   <%= @content_for_page_javascript %>
+ <% end -%>
+</head>
+
+<body>
+<div id="main-container">
+  <div id="top"></div>
+  <div id="content">
+    <div id="content-link"><a href="../">www.jedidiah.com</a></div>
+    <div id="content-menu">1<a href="../">2 3 4 5</a></div>
+  </div>
+  <div id="left">
+    <div id="flash-content">
+      <!--url's used in the movie-->
+      <!--text used in the movie-->
+      <!-- saved from url=(0013)about:internet -->
+      <object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" codebase="http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,0,0" width="303" height="355" id="commoncold" align="middle">
+      <param name="allowScriptAccess" value="sameDomain" />
+      <param name="movie" value="commoncold.swf" /><param name="quality" value="high" /><param name="bgcolor" value="#ffffff" /><embed src="/flash/commoncold.swf" quality="high" bgcolor="#ffffff" width="303" height="355" name="commoncold" align="middle" allowScriptAccess="sameDomain" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" />
+      </object>
+    </div>
+  </div><!-- left -->
+  <div id="right">
+    <div id="logo"></div>
+  </div>
+</div>
+
+<div class="clear"></div>
+<%= yield %>
+
+<div class="footer">
+    <p class="copyright">&copy; 2008 Common Cold Inc. All rights reserved.</p>
+<a href="#" onclick="show_content('print', 'displace_me', 'www.jedidiahusa.com', '4')" >show</a>
+</div>
+
+</body>
+  <%= javascript_include_tag "prototype", 'application', :cache => 'commoncold-js' %>
+</html>

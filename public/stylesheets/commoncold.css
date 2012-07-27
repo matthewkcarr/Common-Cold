@@ -1,0 +1,122 @@
+*, html {
+  background-color: #FFFFFF;
+  font-family: Helvetica, sans-serif;
+  background: transparent;
+}
+body {
+  background-color: #FFFFFF;
+  margin: 0px 0px; 
+  padding: 0px;
+  text-align: center;
+}
+
+#main-container {
+  width: 825px;
+  margin:0px auto;
+  text-align:left;
+  padding:15px;
+}
+
+#top {
+  background-image: url('/images/top.jpg');
+  background-repeat: no-repeat;
+  width: 800px;
+  height: 110px;
+}
+#left { 
+  float: left;
+}
+#flash-content {
+  margin-top: -8px;
+}
+#right {
+  float:left;
+  min-width: 600px;
+  max-width: 600px;
+  background: transparent;
+}
+#content {
+  margin-top: -30px;
+  background: transparent;
+  float:right;
+  background-repeat: no-repeat;
+  width: 477px;
+  height: 1700px;
+  background-image: url(/images/about_us/cc/1.jpg);
+  padding-left: 45px;
+}
+#content-link {
+  position: relative;
+  top: 113px;
+  left: -32px;
+  width: 100px;
+}
+#content-menu {
+  position: relative;
+  top: 101px;
+  left: 289px;
+  width: 150px;
+}
+#content-video {
+  visibility: hidden;
+  position: relative;
+  top: 132px;
+  left: -43px;
+}
+#downloads-links {
+  position: relative;
+  top: 201px;
+  left: -35px;
+  width: 200px;
+  height: 271px;
+}
+.dlink {
+  font-size: 0.6em;
+  text-decoration: underline;
+  text-transform: none;
+}
+a#dlink2 {
+  position:relative;
+  top: 61px;
+}
+a#dlink3 {
+  position:relative;
+  top: 163px;
+}
+a#dlink4 {
+  position:relative;
+  top: 229px;
+}
+#logo {
+  position:relative;
+  top: -1250px;
+  left: 305px;
+  background-image: url('/images/common-cold-logo.jpg');
+  background-repeat: no-repeat;
+  width: 552px;
+  height: 366px;
+}
+.footer {
+  width: 800px;
+  text-align: right;
+  font-size: .7em;
+}
+.clear {
+  clear: both;
+}
+a {
+  color: #F06EAA;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-size: .7em;
+}
+.menu {
+  font-size: .9em;
+  letter-spacing: 12px;
+}
+#getflash {
+  position: relative;
+  display: block;
+  top:  -40px;
+  left: 166px;
+}
